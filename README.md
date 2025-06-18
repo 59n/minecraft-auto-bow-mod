@@ -64,7 +64,7 @@ Access the settings GUI (default: O key) to customize:
 ## Development
 
 ### Building from Source
-git clone https://github.com/yourusername/minecraft-auto-bow-mod.git
+git clone https://github.com/59n/minecraft-auto-bow-mod.git
 cd minecraft-auto-bow-mod
 ./gradlew build
 

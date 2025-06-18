@@ -209,7 +209,7 @@ public class ServerProfileManager {
     public static void onDiminishingReturnsDetected() {
         if (currentProfile == null) return;
 
-        // Don't send adaptation messages during break periods
+
         if (SessionManager.isInBreakPeriod()) {
             AutoBowConfig config = AutoBowConfig.getInstance();
             if (config.enableDebugMode) {
@@ -220,12 +220,12 @@ public class ServerProfileManager {
 
         AutoBowConfig config = AutoBowConfig.getInstance();
 
-        // Trigger immediate session adaptation only during active farming
+
         if (SessionManager.isInFarmingSession() && currentProfile.optimalSessionLength > 5) {
             currentProfile.optimalSessionLength = Math.max(5, currentProfile.optimalSessionLength - 3);
             currentProfile.optimalBreakLength = Math.min(20, currentProfile.optimalBreakLength + 3);
 
-            // Apply changes immediately
+
             applyProfileToConfig();
             saveServerProfiles();
 

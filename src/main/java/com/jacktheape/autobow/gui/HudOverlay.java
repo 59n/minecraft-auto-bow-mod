@@ -3,9 +3,10 @@ package com.jacktheape.autobow.gui;
 import com.jacktheape.autobow.AutoBowConfig;
 import com.jacktheape.autobow.AutoBowHandler;
 import com.jacktheape.autobow.AmmoManager;
-import com.jacktheape.autobow.SessionManager;
+import com.jacktheape.autobow.ModeBasedSessionManager;
 import com.jacktheape.autobow.ServerProfileManager;
 import com.jacktheape.autobow.BossbarXpMonitor;
+import com.jacktheape.autobow.MovementVariationManager;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -34,7 +35,7 @@ public class HudOverlay {
             return;
         }
 
- 
+
         ItemStack mainHandItem = client.player.getMainHandStack();
         ItemStack offhandItem = client.player.getOffHandStack();
 
@@ -52,33 +53,33 @@ public class HudOverlay {
             return;
         }
 
- 
+
         HudPosition position = calculateHudPosition(config);
         int hudX = position.x;
         int hudY = position.y;
         int hudWidth = position.width;
         int hudHeight = calculateHudHeight(config);
 
- 
+
         float scale = config.hudScale / 100.0f;
         context.getMatrices().push();
         context.getMatrices().scale(scale, scale, 1.0f);
 
- 
+
         hudX = (int) (hudX / scale);
         hudY = (int) (hudY / scale);
         hudWidth = (int) (hudWidth / scale);
 
- 
+
         context.fill(hudX - 5, hudY - 5, hudX + hudWidth + 5, hudY + hudHeight + 5, 0x90000000);
         context.drawBorder(hudX - 5, hudY - 5, hudWidth + 10, hudHeight + 10, 0xFF555555);
 
- 
-        String titleText = config.useEfficiencyBasedSessions ? "§6Auto Bow - Efficiency Mode" : "§6Auto Bow Status";
+
+        String titleText = "§6Auto Bow - " + config.operatingMode + " Mode";
         context.drawText(client.textRenderer, Text.literal(titleText), hudX, hudY, 0xFFFFFF, true);
         hudY += 12;
 
- 
+
         String status = AutoBowHandler.isEnabled() ? "§aENABLED" : "§cDISABLED";
         String handType = foundBowInOffhand ? " (Offhand)" : " (Main Hand)";
         if (AutoBowHandler.isEnabled()) {
@@ -92,7 +93,7 @@ public class HudOverlay {
         context.drawText(client.textRenderer, Text.literal("Status: " + status), hudX, hudY, 0xFFFFFF, true);
         hudY += 10;
 
- 
+
         if (config.showXpRate && config.enableBossbarXpMonitoring && BossbarXpMonitor.isMonitoring()) {
             double currentXpRate = BossbarXpMonitor.getCurrentXpRate();
             String xpRateColor = BossbarXpMonitor.isDiminishingReturnsActive() ? "§c" : "§a";
@@ -102,7 +103,7 @@ public class HudOverlay {
             hudY += 10;
         }
 
- 
+
         if (config.showEfficiency && config.enableBossbarXpMonitoring && BossbarXpMonitor.isMonitoring()) {
             double efficiency = BossbarXpMonitor.getEfficiencyPercentage();
             String efficiencyColor = efficiency > 80 ? "§a" : efficiency > 60 ? "§e" : "§c";
@@ -111,14 +112,14 @@ public class HudOverlay {
                     hudX, hudY, 0xFFFFFF, true);
             hudY += 10;
 
- 
+
             int efficiencyWidth = (int) (hudWidth * Math.min(efficiency / 100.0, 1.0));
             int barColor = efficiency > 80 ? 0xFF00AA00 : efficiency > 60 ? 0xFFFFAA00 : 0xFFAA0000;
             renderProgressBar(context, hudX, hudY, hudWidth, 4, efficiencyWidth, hudWidth, barColor);
             hudY += 8;
         }
 
- 
+
         if (config.enableServerAdaptation) {
             ServerProfileManager.ServerProfile profile = ServerProfileManager.getCurrentProfile();
             if (profile != null) {
@@ -145,57 +146,132 @@ public class HudOverlay {
             }
         }
 
- 
-        if (config.showSessionInfo && config.enableSessionManagement) {
-            if (SessionManager.isInFarmingSession()) {
-                long sessionDuration = SessionManager.getSessionTimeRemaining(config);
+
+        if (config.showSessionInfo) {
+            String modeText = "§7Mode: §e" + config.operatingMode;
+            context.drawText(client.textRenderer, Text.literal(modeText), hudX, hudY, 0xFFFFFF, true);
+            hudY += 10;
+
+            if (ModeBasedSessionManager.isInSession()) {
+                long sessionDuration = ModeBasedSessionManager.getSessionTimeElapsed();
                 int minutesElapsed = (int) (sessionDuration / 60000);
                 int secondsElapsed = (int) ((sessionDuration % 60000) / 1000);
 
-                if (config.useEfficiencyBasedSessions) {
-                    context.drawText(client.textRenderer,
-                            Text.literal("§aSession: " + minutesElapsed + "m " + secondsElapsed + "s"),
-                            hudX, hudY, 0xFFFFFF, true);
-                    hudY += 10;
+                String sessionText = "";
+                switch (config.operatingMode) {
+                    case "SIMPLE":
+                        sessionText = "§aShoot: " + minutesElapsed + "m " + secondsElapsed + "s";
 
-                    double currentEfficiency = SessionManager.getCurrentSessionEfficiency();
-                    double threshold = config.xpReductionThreshold * 100;
-                    String thresholdText = currentEfficiency < threshold ? "§c⚠ Below" : "§a✓ Above";
-                    context.drawText(client.textRenderer,
-                            Text.literal("§7Threshold: " + (int)threshold + "% " + thresholdText),
-                            hudX, hudY, 0xFFFFFF, true);
-                    hudY += 10;
+
+                        long remainingShootTime = (config.simpleShootDuration * 60 * 1000) - sessionDuration;
+                        if (remainingShootTime > 0) {
+                            int remainingMinutes = (int) (remainingShootTime / 60000);
+                            int remainingSeconds = (int) ((remainingShootTime % 60000) / 1000);
+                            context.drawText(client.textRenderer, Text.literal(sessionText), hudX, hudY, 0xFFFFFF, true);
+                            hudY += 10;
+                            sessionText = "§7Remaining: " + remainingMinutes + "m " + remainingSeconds + "s";
+                        }
+                        break;
+
+                    case "EFFICIENCY":
+                        double currentEfficiency = ModeBasedSessionManager.getCurrentSessionEfficiency();
+                        String efficiencyColor = currentEfficiency > 80 ? "§a" : currentEfficiency > 60 ? "§e" : "§c";
+                        sessionText = "§aSession: " + minutesElapsed + "m " + secondsElapsed + "s";
+                        context.drawText(client.textRenderer, Text.literal(sessionText), hudX, hudY, 0xFFFFFF, true);
+                        hudY += 10;
+
+                        sessionText = "Efficiency: " + efficiencyColor + String.format("%.1f%%", currentEfficiency);
+                        context.drawText(client.textRenderer, Text.literal(sessionText), hudX, hudY, 0xFFFFFF, true);
+                        hudY += 10;
+
+
+                        double threshold = config.xpReductionThreshold * 100;
+                        String thresholdText = currentEfficiency < threshold ? "§c⚠ Below Threshold" : "§a✓ Above Threshold";
+                        sessionText = "§7Threshold: " + (int)threshold + "% " + thresholdText;
+                        break;
+
+                    case "LEARNING":
+                        sessionText = "§aLearning: " + minutesElapsed + "m " + secondsElapsed + "s";
+                        context.drawText(client.textRenderer, Text.literal(sessionText), hudX, hudY, 0xFFFFFF, true);
+                        hudY += 10;
+
+
+                        sessionText = "§7Adapting to server patterns...";
+                        break;
                 }
 
-            } else if (SessionManager.isInBreakPeriod()) {
-                long timeRemaining = SessionManager.getBreakTimeRemaining(config);
+                context.drawText(client.textRenderer, Text.literal(sessionText), hudX, hudY, 0xFFFFFF, true);
+                hudY += 10;
+
+            } else if (ModeBasedSessionManager.isInBreak()) {
+                long timeRemaining = ModeBasedSessionManager.getBreakTimeRemaining();
                 int minutesRemaining = (int) (timeRemaining / 60000);
                 int secondsRemaining = (int) ((timeRemaining % 60000) / 1000);
+
                 context.drawText(client.textRenderer,
                         Text.literal("§6Break: " + minutesRemaining + "m " + secondsRemaining + "s"),
                         hudX, hudY, 0xFFFFFF, true);
                 hudY += 10;
 
- 
-                long breakDuration = config.breakDuration * 60 * 1000;
-                long elapsed = breakDuration - timeRemaining;
-                renderProgressBar(context, hudX, hudY, hudWidth, 4, (int)elapsed, (int)breakDuration, 0xFFFF6600);
-                hudY += 8;
+
+                long totalBreakTime = 0;
+                switch (config.operatingMode) {
+                    case "SIMPLE":
+                        totalBreakTime = config.simpleBreakDuration * 60 * 1000;
+                        break;
+                    case "EFFICIENCY":
+                    case "LEARNING":
+                        totalBreakTime = config.efficiencyBreakDuration * 60 * 1000;
+                        break;
+                }
+
+                if (totalBreakTime > 0) {
+                    long elapsed = totalBreakTime - timeRemaining;
+                    renderProgressBar(context, hudX, hudY, hudWidth, 4, (int)elapsed, (int)totalBreakTime, 0xFFFF6600);
+                    hudY += 8;
+                }
+
+
+                String breakReason = "";
+                switch (config.operatingMode) {
+                    case "SIMPLE":
+                        breakReason = "§7Reason: Timed break";
+                        break;
+                    case "EFFICIENCY":
+                    case "LEARNING":
+                        breakReason = "§7Reason: Efficiency dropped";
+                        break;
+                }
+                context.drawText(client.textRenderer, Text.literal(breakReason), hudX, hudY, 0xFFFFFF, true);
+                hudY += 10;
             }
 
- 
-            String sessionText = "§7Sessions: " + config.sessionsCompletedToday + "/" + config.maxDailyFarmingSessions;
-            if (config.enableBossbarXpMonitoring && BossbarXpMonitor.isMonitoring()) {
+
+            if (!config.operatingMode.equals("SIMPLE")) {
+                String sessionText = "§7Sessions: " + config.sessionsCompletedToday + "/" +
+                        (config.operatingMode.equals("EFFICIENCY") ? config.maxDailyEfficiencySessions : config.maxDailyFarmingSessions);
+
+                if (config.enableBossbarXpMonitoring && BossbarXpMonitor.isMonitoring()) {
+                    long totalXpToday = BossbarXpMonitor.getTotalXpToday();
+                    if (totalXpToday > 0) {
+                        sessionText += " (§e" + formatNumber(totalXpToday) + " XP§7)";
+                    }
+                }
+                context.drawText(client.textRenderer, Text.literal(sessionText), hudX, hudY, 0xFFFFFF, true);
+                hudY += 10;
+            } else if (config.operatingMode.equals("SIMPLE") && config.enableBossbarXpMonitoring && BossbarXpMonitor.isMonitoring()) {
+
                 long totalXpToday = BossbarXpMonitor.getTotalXpToday();
                 if (totalXpToday > 0) {
-                    sessionText += " (§e" + formatNumber(totalXpToday) + " XP§7)";
+                    context.drawText(client.textRenderer,
+                            Text.literal("§7Today: §e" + formatNumber(totalXpToday) + " XP"),
+                            hudX, hudY, 0xFFFFFF, true);
+                    hudY += 10;
                 }
             }
-            context.drawText(client.textRenderer, Text.literal(sessionText), hudX, hudY, 0xFFFFFF, true);
-            hudY += 10;
         }
 
- 
+
         int nextShotTime = AutoBowHandler.getNextShotCountdown();
         if (nextShotTime > 0) {
             String timerText = String.format("Cooldown: §e%.1fs", nextShotTime / 20.0f);
@@ -215,32 +291,48 @@ public class HudOverlay {
             hudY += 10;
         }
 
- 
+
         if (config.showDurability) {
-            hudY += 5; 
+            hudY += 5;
             renderDurabilityBar(context, activeBowStack, hudX, hudY);
-            hudY += 20; 
+            hudY += 20;
         }
 
- 
+
         renderAmmoStatus(context, activeBowStack, hudX, hudY);
         hudY += 10;
 
- 
+
         context.drawText(client.textRenderer, Text.literal("§7Timing: " +
                         String.format("%.1f-%.1fs", config.minDrawTime/20.0f, config.maxDrawTime/20.0f)),
                 hudX, hudY, 0xFFFFFF, true);
         hudY += 10;
 
- 
+
         if (config.enableMovementVariation) {
             String movementStatus = getMovementIntensityText(config.movementIntensity);
-            context.drawText(client.textRenderer, Text.literal("§7Movement: " + movementStatus),
+            String movementState = "";
+
+
+            try {
+                movementState = MovementVariationManager.getMovementStatus();
+                context.drawText(client.textRenderer,
+                        Text.literal("§7Movement: " + movementStatus + " (" + movementState + ")"),
+                        hudX, hudY, 0xFFFFFF, true);
+            } catch (Exception e) {
+                context.drawText(client.textRenderer,
+                        Text.literal("§7Movement: " + movementStatus),
+                        hudX, hudY, 0xFFFFFF, true);
+            }
+            hudY += 10;
+        } else {
+            context.drawText(client.textRenderer,
+                    Text.literal("§7Movement: §cOFF"),
                     hudX, hudY, 0xFFFFFF, true);
             hudY += 10;
         }
 
- 
+
         if (config.enableBossbarXpMonitoring) {
             String monitorStatus = BossbarXpMonitor.isMonitoring() ? "§aActive" : "§cInactive";
             context.drawText(client.textRenderer, Text.literal("§7Bossbar: " + monitorStatus),
@@ -272,16 +364,16 @@ public class HudOverlay {
             case "Top Left":
                 return new HudPosition(margin, margin, hudWidth);
             case "Bottom Right":
-                return new HudPosition(screenWidth - hudWidth - margin, screenHeight - 200, hudWidth);
+                return new HudPosition(screenWidth - hudWidth - margin, screenHeight - 250, hudWidth);
             case "Bottom Left":
-                return new HudPosition(margin, screenHeight - 200, hudWidth);
+                return new HudPosition(margin, screenHeight - 250, hudWidth);
             default:
                 return new HudPosition(screenWidth - hudWidth - margin, margin, hudWidth);
         }
     }
 
     private static int calculateHudHeight(AutoBowConfig config) {
-        int baseHeight = 60;
+        int baseHeight = 80;
 
         if (config.showXpRate && config.enableBossbarXpMonitoring) {
             baseHeight += 10;
@@ -295,19 +387,25 @@ public class HudOverlay {
             baseHeight += 20;
         }
 
-        if (config.showSessionInfo && config.enableSessionManagement) {
-            baseHeight += config.useEfficiencyBasedSessions ? 40 : 30;
+        if (config.showSessionInfo) {
+            switch (config.operatingMode) {
+                case "SIMPLE":
+                    baseHeight += 40;
+                    break;
+                case "EFFICIENCY":
+                    baseHeight += 60;
+                    break;
+                case "LEARNING":
+                    baseHeight += 50;
+                    break;
+            }
         }
 
         if (config.showDurability) {
-            baseHeight += 25; 
+            baseHeight += 25;
         }
 
-        baseHeight += 40; 
-
-        if (config.enableMovementVariation) {
-            baseHeight += 10;
-        }
+        baseHeight += 50;
 
         return baseHeight;
     }
@@ -355,7 +453,7 @@ public class HudOverlay {
         int remainingDurability = maxDurability - currentDamage;
         float durabilityPercent = (float) remainingDurability / maxDurability;
 
- 
+
         int barWidth = 180;
         context.fill(x, y, x + barWidth, y + 6, 0xFF333333);
 
@@ -374,7 +472,7 @@ public class HudOverlay {
         context.fill(x + 1, y + 1, x + 1 + progressWidth, y + 5, barColor);
         context.drawBorder(x, y, barWidth, 6, 0xFF666666);
 
- 
+
         String durabilityText = String.format("%d/%d (%.0f%%)", remainingDurability, maxDurability, durabilityPercent * 100);
         context.drawText(client.textRenderer,
                 Text.literal(durabilityText), x, y + 8, 0xFFFFFF, true);

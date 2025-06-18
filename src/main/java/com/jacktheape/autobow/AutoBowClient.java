@@ -15,21 +15,24 @@ public class AutoBowClient implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             AutoBowHandler.onClientTick(client);
-            SessionManager.onClientTick(client);
+            ModeBasedSessionManager.onClientTick(client);
             ServerProfileManager.onClientTick(client);
-            BossbarXpMonitor.onClientTick(client); 
+            BossbarXpMonitor.onClientTick(client);
             AutoBowKeybinds.handleKeyPress();
+
+
+            AutoBowConfig config = AutoBowConfig.getInstance();
+            if (config.enableMovementVariation) {
+                MovementVariationManager.onClientTick(client);
+            }
         });
 
- 
         AutoBowConfig config = AutoBowConfig.getInstance();
         if (config.enableBossbarXpMonitoring) {
             System.out.println("[Auto Bow Client] Auto-starting bossbar monitor");
             BossbarXpMonitor.startMonitoring();
         }
+
+        System.out.println("[Auto Bow Client] Initialized with mode: " + config.operatingMode);
     }
-
-
-
-
 }

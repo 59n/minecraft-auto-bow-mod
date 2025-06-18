@@ -543,7 +543,9 @@ public class AutoBowSettingsScreen extends Screen {
     }
 
     private String getMovementIntensityText() {
-        if (!config.enableMovementVariation) return "Off";
+        if (!config.enableMovementVariation) {
+            return "Off";
+        }
         switch (config.movementIntensity) {
             case 1: return "Low";
             case 2: return "Medium";
@@ -573,28 +575,75 @@ public class AutoBowSettingsScreen extends Screen {
     }
 
     private void saveAndClose() {
- 
-        if (xpCheckIntervalButton != null) config.xpCheckInterval = xpCheckIntervalButton.getValue();
-        if (breakDurationButton != null) config.breakDuration = breakDurationButton.getValue();
-        if (maxSessionsButton != null) config.maxDailyFarmingSessions = maxSessionsButton.getValue();
-        if (maxSessionDurationButton != null) config.maxSessionDuration = maxSessionDurationButton.getValue();
-        if (hudPositionButton != null) config.hudPosition = hudPositionButton.getValue();
-        if (hudScaleButton != null) config.hudScale = hudScaleButton.getValue();
+        try {
 
-        if (movementIntensityButton != null) {
-            String movementValue = movementIntensityButton.getValue();
-            config.enableMovementVariation = !movementValue.equals("Off");
-            switch (movementValue) {
-                case "Low": config.movementIntensity = 1; break;
-                case "Medium": config.movementIntensity = 2; break;
-                case "High": config.movementIntensity = 3; break;
-                default: config.movementIntensity = 2; break;
+            if (xpCheckIntervalButton != null) {
+                config.xpCheckInterval = xpCheckIntervalButton.getValue();
+                System.out.println("[Settings Debug] Saving XP interval: " + config.xpCheckInterval);
             }
-        }
 
-        config.validateAndFix();
-        config.saveConfig();
-        this.client.setScreen(parent);
+            if (breakDurationButton != null) {
+                config.breakDuration = breakDurationButton.getValue();
+                System.out.println("[Settings Debug] Saving break duration: " + config.breakDuration);
+            }
+
+            if (maxSessionsButton != null) {
+                config.maxDailyFarmingSessions = maxSessionsButton.getValue();
+            }
+
+            if (maxSessionDurationButton != null) {
+                config.maxSessionDuration = maxSessionDurationButton.getValue();
+            }
+
+            if (hudPositionButton != null) {
+                config.hudPosition = hudPositionButton.getValue();
+            }
+
+            if (hudScaleButton != null) {
+                config.hudScale = hudScaleButton.getValue();
+            }
+
+
+            if (movementIntensityButton != null) {
+                String movementValue = movementIntensityButton.getValue();
+                System.out.println("[Settings Debug] Movement button value: " + movementValue);
+
+                if (movementValue.equals("Off")) {
+                    config.enableMovementVariation = false;
+                    config.movementIntensity = 1;
+                    System.out.println("[Settings Debug] Movement disabled");
+                } else {
+                    config.enableMovementVariation = true;
+                    switch (movementValue) {
+                        case "Low":
+                            config.movementIntensity = 1;
+                            break;
+                        case "Medium":
+                            config.movementIntensity = 2;
+                            break;
+                        case "High":
+                            config.movementIntensity = 3;
+                            break;
+                        default:
+                            config.movementIntensity = 2;
+                            break;
+                    }
+                    System.out.println("[Settings Debug] Movement enabled with intensity: " + config.movementIntensity);
+                }
+            }
+
+            System.out.println("[Settings Debug] Final movement state - Enabled: " + config.enableMovementVariation +
+                    ", Intensity: " + config.movementIntensity);
+
+
+            config.validateAndFix();
+            config.saveConfig();
+
+            this.client.setScreen(parent);
+        } catch (Exception e) {
+            System.err.println("[Settings Error] Failed to save settings: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Override

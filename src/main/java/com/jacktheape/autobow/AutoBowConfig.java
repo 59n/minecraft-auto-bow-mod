@@ -73,9 +73,9 @@ public class AutoBowConfig {
     public int guiScrollSensitivity = 20;
     public boolean showTooltips = true;
     public boolean useColorCoding = true;
-    // HUD Customization Options
-    public String hudPosition = "Top Right"; // "Top Right", "Top Left", "Bottom Right", "Bottom Left"
-    public int hudScale = 100; // 50-150%
+
+    public String hudPosition = "Top Right";
+    public int hudScale = 100;
     public boolean showXpRate = true;
     public boolean showEfficiency = true;
     public boolean showSessionInfo = true;
@@ -108,27 +108,7 @@ public class AutoBowConfig {
         defaultConfig.saveConfig();
         return defaultConfig;
     }
-
-    public void saveConfig() {
-        try {
-            CONFIG_FILE.getParentFile().mkdirs();
-            try (FileWriter writer = new FileWriter(CONFIG_FILE)) {
-                GSON.toJson(this, writer);
-            }
-        } catch (IOException e) {
-            System.err.println("[Auto Bow] Failed to save config: " + e.getMessage());
-        }
-    }
-
- 
-    public void validateAndFix() {
-        minDrawTime = Math.max(5, Math.min(minDrawTime, 100)); 
-        maxDrawTime = Math.max(minDrawTime, Math.min(maxDrawTime, 200)); 
-        minCooldownTime = Math.max(0, Math.min(minCooldownTime, 100)); 
-        maxCooldownTime = Math.max(minCooldownTime, Math.min(maxCooldownTime, 200)); 
-        durabilityThreshold = Math.max(1, Math.min(durabilityThreshold, 100)); 
-    }
-
+    
     public int getRandomDrawTime() {
         if (useAdvancedRandomization) {
             return AdvancedRandomizer.getRandomizedDrawTime();
@@ -146,6 +126,73 @@ public class AutoBowConfig {
  
             if (minCooldownTime == maxCooldownTime) return minCooldownTime;
             return minCooldownTime + (int)(Math.random() * (maxCooldownTime - minCooldownTime + 1));
+        }
+    }
+
+    public void validateAndFix() {
+
+        if (minDrawTime < 5) minDrawTime = 5;
+        if (maxDrawTime > 100) maxDrawTime = 100;
+        if (maxDrawTime < minDrawTime) maxDrawTime = minDrawTime;
+
+        if (minCooldownTime < 0) minCooldownTime = 0;
+        if (maxCooldownTime > 100) maxCooldownTime = 100;
+        if (maxCooldownTime < minCooldownTime) maxCooldownTime = minCooldownTime;
+
+
+        if (durabilityThreshold < 1) durabilityThreshold = 1;
+        if (durabilityThreshold > 100) durabilityThreshold = 100;
+
+
+        if (xpCheckInterval < 500) xpCheckInterval = 500;
+        if (xpCheckInterval > 10000) xpCheckInterval = 5000;
+
+        if (xpReductionThreshold < 0.3) xpReductionThreshold = 0.3;
+        if (xpReductionThreshold > 0.9) xpReductionThreshold = 0.9;
+
+
+        if (breakDuration < 1) breakDuration = 1;
+        if (breakDuration > 30) breakDuration = 30;
+
+        if (maxSessionDuration < 10) maxSessionDuration = 10;
+        if (maxSessionDuration > 120) maxSessionDuration = 120;
+
+        if (maxDailyFarmingSessions < 1) maxDailyFarmingSessions = 1;
+        if (maxDailyFarmingSessions > 50) maxDailyFarmingSessions = 50;
+
+
+        if (movementIntensity < 1) movementIntensity = 1;
+        if (movementIntensity > 3) movementIntensity = 3;
+
+
+
+        if (hudScale < 50) hudScale = 50;
+        if (hudScale > 200) hudScale = 200;
+
+        if (!hudPosition.equals("Top Right") && !hudPosition.equals("Top Left") &&
+                !hudPosition.equals("Bottom Right") && !hudPosition.equals("Bottom Left")) {
+            hudPosition = "Top Right";
+        }
+
+        System.out.println("[Config Debug] Validated settings - Movement enabled: " + enableMovementVariation +
+                ", Intensity: " + movementIntensity);
+    }
+
+
+    public void saveConfig() {
+        try {
+            System.out.println("[Config Debug] Saving config - Movement enabled: " + enableMovementVariation +
+                    ", Intensity: " + movementIntensity +
+                    ", XP interval: " + xpCheckInterval +
+                    ", Break duration: " + breakDuration);
+
+
+
+
+            System.out.println("[Config Debug] Config saved successfully");
+        } catch (Exception e) {
+            System.err.println("[Config Error] Failed to save config: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

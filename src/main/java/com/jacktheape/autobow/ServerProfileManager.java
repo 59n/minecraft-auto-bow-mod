@@ -205,22 +205,33 @@ public class ServerProfileManager {
  
     }
 
- 
+
     public static void onDiminishingReturnsDetected() {
         if (currentProfile == null) return;
 
+        // Don't send adaptation messages during break periods
+        if (SessionManager.isInBreakPeriod()) {
+            AutoBowConfig config = AutoBowConfig.getInstance();
+            if (config.enableDebugMode) {
+                System.out.println("[Server Profile] Skipping adaptation - currently in break period");
+            }
+            return;
+        }
+
         AutoBowConfig config = AutoBowConfig.getInstance();
 
-        if (currentProfile.optimalSessionLength > 5) {
+        // Trigger immediate session adaptation only during active farming
+        if (SessionManager.isInFarmingSession() && currentProfile.optimalSessionLength > 5) {
             currentProfile.optimalSessionLength = Math.max(5, currentProfile.optimalSessionLength - 3);
             currentProfile.optimalBreakLength = Math.min(20, currentProfile.optimalBreakLength + 3);
 
+            // Apply changes immediately
             applyProfileToConfig();
             saveServerProfiles();
 
             if (config.showAdaptationMessages) {
                 MinecraftClient.getInstance().player.sendMessage(
-                        Text.literal("§c[Auto Bow] Diminishing returns detected! Adapted to " +
+                        Text.literal("§c[Auto Bow] Server adapted: " +
                                 currentProfile.optimalSessionLength + "m sessions / " +
                                 currentProfile.optimalBreakLength + "m breaks"),
                         false
@@ -228,7 +239,7 @@ public class ServerProfileManager {
             }
 
             if (config.enableDebugMode) {
-                System.out.println("[Server Profile] Adapted session timing due to diminishing returns");
+                System.out.println("[Server Profile] Adapted session timing due to diminishing returns during active farming");
             }
         }
     }

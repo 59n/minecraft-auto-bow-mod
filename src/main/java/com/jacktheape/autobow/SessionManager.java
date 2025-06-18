@@ -14,19 +14,20 @@ public class SessionManager {
     private static long lastEfficiencyCheck = 0;
     private static boolean efficiencyBasedMode = true;
     private static boolean sessionEndingDueToEfficiency = false;
+    private static boolean adaptationMessagesSent = false;
 
     public static void onClientTick(MinecraftClient client) {
         AutoBowConfig config = AutoBowConfig.getInstance();
 
- 
+
         if (!config.enableSessionManagement) {
             return;
         }
 
- 
+
         checkDailyReset(config);
 
- 
+
         if (config.sessionsCompletedToday >= config.maxDailyFarmingSessions) {
             if (config.showSessionNotifications && client.player != null) {
                 client.player.sendMessage(
@@ -38,13 +39,13 @@ public class SessionManager {
             return;
         }
 
- 
+
         if (inFarmingSession) {
             handleEfficiencyBasedSession(client, config);
         } else if (inBreakPeriod) {
             handleBreakPeriod(client, config);
         } else if (AutoBowHandler.isEnabled() && !sessionEndingDueToEfficiency) {
- 
+
             startFarmingSession(client, config);
         }
     }
@@ -53,18 +54,18 @@ public class SessionManager {
         long currentTime = System.currentTimeMillis();
         long sessionDuration = currentTime - sessionStartTime;
 
- 
+
         if (currentTime - lastEfficiencyCheck > 15000) {
             checkEfficiencyAndAdapt(client, config, sessionDuration);
             lastEfficiencyCheck = currentTime;
         }
 
- 
+
         if (config.enableMovementVariation && sessionDuration % 30000 == 0) {
             addMovementVariation(client);
         }
 
- 
+
         long maxSessionDuration = config.maxSessionDuration * 60 * 1000;
         if (sessionDuration >= maxSessionDuration) {
             if (config.enableDebugMode) {
@@ -75,8 +76,13 @@ public class SessionManager {
     }
 
     private static void checkEfficiencyAndAdapt(MinecraftClient client, AutoBowConfig config, long sessionDuration) {
+
+        if (inBreakPeriod || sessionEndingDueToEfficiency) {
+            return;
+        }
+
         if (!BossbarXpMonitor.isMonitoring()) {
-            return; 
+            return;
         }
 
         double currentEfficiency = BossbarXpMonitor.getEfficiencyPercentage();
@@ -86,10 +92,11 @@ public class SessionManager {
             System.out.println("[Session Manager] Efficiency check: " + String.format("%.1f%%", currentEfficiency) +
                     " | Threshold: " + String.format("%.1f%%", thresholdPercentage) +
                     " | Session duration: " + (sessionDuration / 60000) + "m" +
-                    " | Consecutive low readings: " + consecutiveLowEfficiencyReadings);
+                    " | Consecutive low readings: " + consecutiveLowEfficiencyReadings +
+                    " | In break: " + inBreakPeriod);
         }
 
- 
+
         if (currentEfficiency < thresholdPercentage) {
             consecutiveLowEfficiencyReadings++;
 
@@ -98,7 +105,7 @@ public class SessionManager {
                         String.format("%.1f%% < %.1f%%", currentEfficiency, thresholdPercentage));
             }
 
- 
+
             if (consecutiveLowEfficiencyReadings >= 2) {
                 if (config.enableDebugMode) {
                     System.out.println("[Session Manager] TRIGGERING SESSION END due to low efficiency");
@@ -107,7 +114,7 @@ public class SessionManager {
                         String.format("Efficiency dropped to %.1f%% (threshold: %.1f%%)", currentEfficiency, thresholdPercentage));
             }
         } else {
- 
+
             if (consecutiveLowEfficiencyReadings > 0) {
                 if (config.enableDebugMode) {
                     System.out.println("[Session Manager] Efficiency recovered, resetting counter");
@@ -116,7 +123,7 @@ public class SessionManager {
             }
         }
 
- 
+
         if (config.showSessionNotifications && sessionDuration % 120000 == 0) {
             client.player.sendMessage(
                     Text.literal(String.format("§7[Auto Bow] Session efficiency: %.1f%% | Duration: %dm | Threshold: %.1f%%",
@@ -131,11 +138,17 @@ public class SessionManager {
         long breakDuration = currentTime - breakStartTime;
         long maxBreakDuration = config.breakDuration * 60 * 1000;
 
+
+        if (!adaptationMessagesSent && config.enableDebugMode) {
+            System.out.println("[Session Manager] In break period - skipping all efficiency checks and adaptations");
+            adaptationMessagesSent = true;
+        }
+
         if (breakDuration >= maxBreakDuration) {
             endBreakPeriod(client, config);
         }
 
- 
+
         if (config.showSessionNotifications && breakDuration % 60000 == 0) {
             int remainingMinutes = (int) ((maxBreakDuration - breakDuration) / 60000);
             if (remainingMinutes > 0 && client.player != null) {
@@ -151,12 +164,13 @@ public class SessionManager {
         inFarmingSession = true;
         inBreakPeriod = false;
         sessionEndingDueToEfficiency = false;
+        adaptationMessagesSent = false;
         sessionStartTime = System.currentTimeMillis();
         lastEfficiencyCheck = sessionStartTime;
         currentSessionNumber++;
         consecutiveLowEfficiencyReadings = 0;
 
- 
+
         if (BossbarXpMonitor.isMonitoring()) {
             BossbarXpMonitor.resetEfficiencyBaseline();
             sessionStartEfficiency = 100.0;
@@ -172,31 +186,34 @@ public class SessionManager {
 
         if (config.enableDebugMode) {
             System.out.println("[Session Manager] Started efficiency-based farming session " + currentSessionNumber +
-                    " | Threshold: " + (config.xpReductionThreshold * 100) + "%");
+                    " | Threshold: " + (config.xpReductionThreshold * 100) + "%" +
+                    " | Movement enabled: " + config.enableMovementVariation +
+                    " | Movement intensity: " + config.movementIntensity);
         }
     }
 
     private static void endFarmingSessionDueToEfficiency(MinecraftClient client, AutoBowConfig config, String reason) {
         if (sessionEndingDueToEfficiency) {
-            return; 
+            return;
         }
 
         sessionEndingDueToEfficiency = true;
         inFarmingSession = false;
         inBreakPeriod = true;
+        adaptationMessagesSent = false;
         breakStartTime = System.currentTimeMillis();
 
         long sessionDuration = breakStartTime - sessionStartTime;
 
- 
+
         config.sessionsCompletedToday++;
         config.totalFarmingTimeToday += sessionDuration;
         config.saveConfig();
 
- 
+
         AutoBowHandler.pauseForBreak();
 
- 
+
         double finalEfficiency = BossbarXpMonitor.isMonitoring() ? BossbarXpMonitor.getEfficiencyPercentage() : 0.0;
         long totalXpGained = BossbarXpMonitor.isMonitoring() ? BossbarXpMonitor.getTotalXpToday() : 0;
 
@@ -222,18 +239,19 @@ public class SessionManager {
                     " | Final efficiency: " + String.format("%.1f%%", finalEfficiency));
         }
 
- 
+
         consecutiveLowEfficiencyReadings = 0;
     }
 
     private static void endBreakPeriod(MinecraftClient client, AutoBowConfig config) {
         inBreakPeriod = false;
-        sessionEndingDueToEfficiency = false; 
+        sessionEndingDueToEfficiency = false;
+        adaptationMessagesSent = false;
 
- 
+
         AutoBowHandler.resumeFromBreak();
 
- 
+
         if (BossbarXpMonitor.isMonitoring()) {
             BossbarXpMonitor.resetEfficiencyBaseline();
         }
@@ -254,15 +272,15 @@ public class SessionManager {
         if (client.player == null) return;
 
         try {
- 
-            float yawVariation = (float) (Math.random() * 10 - 5); 
-            float pitchVariation = (float) (Math.random() * 6 - 3); 
+
+            float yawVariation = (float) (Math.random() * 10 - 5);
+            float pitchVariation = (float) (Math.random() * 6 - 3);
 
             client.player.setYaw(client.player.getYaw() + yawVariation);
             client.player.setPitch(client.player.getPitch() + pitchVariation);
 
         } catch (Exception e) {
- 
+
         }
     }
 
@@ -272,13 +290,13 @@ public class SessionManager {
         long lastDay = config.lastDayReset / (24 * 60 * 60 * 1000);
 
         if (currentDay > lastDay) {
- 
+
             config.sessionsCompletedToday = 0;
             config.totalFarmingTimeToday = 0;
             config.lastDayReset = currentTime;
             config.saveConfig();
 
- 
+
             if (BossbarXpMonitor.isMonitoring()) {
                 BossbarXpMonitor.resetDailyStats();
             }
@@ -304,7 +322,7 @@ public class SessionManager {
     public static long getSessionTimeRemaining(AutoBowConfig config) {
         if (!inFarmingSession) return 0;
 
- 
+
         long sessionDuration = System.currentTimeMillis() - sessionStartTime;
         return sessionDuration;
     }
@@ -328,6 +346,7 @@ public class SessionManager {
         breakStartTime = 0;
         consecutiveLowEfficiencyReadings = 0;
         sessionEndingDueToEfficiency = false;
+        adaptationMessagesSent = false;
     }
 
     public static double getCurrentSessionEfficiency() {

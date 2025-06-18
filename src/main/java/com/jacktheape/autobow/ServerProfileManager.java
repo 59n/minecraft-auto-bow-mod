@@ -189,16 +189,25 @@ public class ServerProfileManager {
         }
     }
 
-    private static void applyProfileToConfig() {
+    public static void applyProfileToConfig() {
         if (currentProfile == null) return;
 
         AutoBowConfig config = AutoBowConfig.getInstance();
+
+        boolean userMovementPreference = config.enableMovementVariation;
+        int userMovementIntensity = config.movementIntensity;
+
         config.farmingSessionDuration = currentProfile.optimalSessionLength;
         config.breakDuration = currentProfile.optimalBreakLength;
-        config.maxDailyFarmingSessions = currentProfile.maxDailySessions;
-        config.enableMovementVariation = currentProfile.enableMovementVariation;
 
-        config.saveConfig();
+
+        config.enableMovementVariation = userMovementPreference;
+        config.movementIntensity = userMovementIntensity;
+
+        if (config.enableDebugMode) {
+            System.out.println("[Server Profile] Applied profile but preserved user movement settings: " +
+                    userMovementPreference + " / intensity: " + userMovementIntensity);
+        }
     }
 
     private static void saveServerProfiles() {

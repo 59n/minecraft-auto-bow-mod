@@ -96,12 +96,22 @@ public class HudOverlay {
 
         if (config.showXpRate && config.enableBossbarXpMonitoring && BossbarXpMonitor.isMonitoring()) {
             double currentXpRate = BossbarXpMonitor.getCurrentXpRate();
-            String xpRateColor = BossbarXpMonitor.isDiminishingReturnsActive() ? "§c" : "§a";
+            String performanceRating = BossbarXpMonitor.getCurrentPerformanceRating();
+            double baselineComparison = BossbarXpMonitor.getBaselineComparison();
+
             context.drawText(client.textRenderer,
-                    Text.literal("McMMO XP: " + xpRateColor + String.format("%.0f/min", currentXpRate)),
+                    Text.literal("McMMO XP: " + String.format("%.0f/min", currentXpRate) + " " + performanceRating),
+                    hudX, hudY, 0xFFFFFF, true);
+            hudY += 10;
+
+            String comparisonText = String.format("%.1fx baseline", baselineComparison);
+            String comparisonColor = baselineComparison >= 1.5 ? "§a" : baselineComparison >= 1.0 ? "§e" : "§c";
+            context.drawText(client.textRenderer,
+                    Text.literal("§7Performance: " + comparisonColor + comparisonText),
                     hudX, hudY, 0xFFFFFF, true);
             hudY += 10;
         }
+
 
 
         if (config.showEfficiency && config.enableBossbarXpMonitoring && BossbarXpMonitor.isMonitoring()) {

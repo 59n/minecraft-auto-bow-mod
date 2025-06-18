@@ -19,14 +19,12 @@ public class AutoBowSettingsScreen extends Screen {
     private int currentTab = 0;
     private final String[] tabNames = {"Timing", "Movement", "Simple Mode", "Efficiency", "Learning", "HUD"};
 
-
     private EnhancedSlider minDrawTimeSlider;
     private EnhancedSlider maxDrawTimeSlider;
     private EnhancedSlider minCooldownSlider;
     private EnhancedSlider maxCooldownSlider;
     private EnhancedSlider durabilityThresholdSlider;
     private EnhancedSlider xpThresholdSlider;
-
 
     private CyclingButtonWidget<Integer> xpCheckIntervalButton;
     private CyclingButtonWidget<Integer> simpleShootDurationButton;
@@ -54,15 +52,12 @@ public class AutoBowSettingsScreen extends Screen {
 
         this.clearChildren();
 
-
         this.addDrawableChild(new TextWidget(centerX - 75, 10, 150, 20,
                 Text.literal("§6§lAuto Bow Settings"), this.textRenderer));
-
 
         String modeText = "Current Mode: " + config.operatingMode;
         this.addDrawableChild(new TextWidget(centerX - 60, 25, 120, 15,
                 Text.literal(modeText), this.textRenderer));
-
 
         int tabWidth = contentWidth / tabNames.length;
         for (int i = 0; i < tabNames.length; i++) {
@@ -79,7 +74,6 @@ public class AutoBowSettingsScreen extends Screen {
                     .build());
         }
 
-
         switch (currentTab) {
             case 0: renderTimingTab(leftX, rightX, startY, spacing, contentWidth); break;
             case 1: renderMovementTab(leftX, rightX, startY, spacing, contentWidth); break;
@@ -88,7 +82,6 @@ public class AutoBowSettingsScreen extends Screen {
             case 4: renderLearningTab(leftX, rightX, startY, spacing, contentWidth); break;
             case 5: renderHudTab(leftX, rightX, startY, spacing, contentWidth); break;
         }
-
 
         int buttonY = this.height - 40;
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Reset Tab"), button -> {
@@ -102,159 +95,6 @@ public class AutoBowSettingsScreen extends Screen {
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Cancel"), button -> {
             this.client.setScreen(parent);
         }).dimensions(leftX + 220, buttonY, 100, 20).build());
-    }
-
-    private void renderEfficiencyTab(int leftX, int rightX, int startY, int spacing, int contentWidth) {
-        int currentY = startY;
-
-
-        this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 20,
-                Text.literal("§6Efficiency-Based Mode"), this.textRenderer));
-        currentY += 25;
-
-
-        this.addDrawableChild(ButtonWidget.builder(
-                        Text.literal("Efficiency Mode: " + (config.operatingMode.equals("EFFICIENCY") ? "§aACTIVE" : "§cINACTIVE")),
-                        button -> {
-                            config.operatingMode = config.operatingMode.equals("EFFICIENCY") ? "SIMPLE" : "EFFICIENCY";
-                            button.setMessage(Text.literal("Efficiency Mode: " + (config.operatingMode.equals("EFFICIENCY") ? "§aACTIVE" : "§cINACTIVE")));
-                            this.init();
-                        })
-                .dimensions(leftX, currentY, contentWidth, 20)
-                .build());
-
-        currentY += spacing;
-
-
-        this.addDrawableChild(ButtonWidget.builder(
-                        Text.literal("Bossbar XP Monitor: " + (config.enableBossbarXpMonitoring ? "§aON" : "§cOFF")),
-                        button -> {
-                            config.enableBossbarXpMonitoring = !config.enableBossbarXpMonitoring;
-                            button.setMessage(Text.literal("Bossbar XP Monitor: " + (config.enableBossbarXpMonitoring ? "§aON" : "§cOFF")));
-                            if (config.enableBossbarXpMonitoring) {
-                                BossbarXpMonitor.startMonitoring();
-                            } else {
-                                BossbarXpMonitor.stopMonitoring();
-                            }
-                        })
-                .dimensions(leftX, currentY, contentWidth, 20)
-                .build());
-
-        currentY += spacing;
-
-
-        xpCheckIntervalButton = CyclingButtonWidget.builder((Integer value) ->
-                        Text.literal("XP Check: " + value + "ms"))
-                .values(500, 1000, 1500, 2000, 3000, 5000)
-                .initially((int)config.xpCheckInterval)
-                .build(leftX, currentY, 200, 20, Text.literal("XP Check Interval"));
-        this.addDrawableChild(xpCheckIntervalButton);
-
-
-        this.addDrawableChild(ButtonWidget.builder(
-                        Text.literal("Debug: " + (config.showBossbarDebugInfo ? "§aON" : "§cOFF")),
-                        button -> {
-                            config.showBossbarDebugInfo = !config.showBossbarDebugInfo;
-                            button.setMessage(Text.literal("Debug: " + (config.showBossbarDebugInfo ? "§aON" : "§cOFF")));
-                        })
-                .dimensions(rightX, currentY, 140, 20)
-                .build());
-
-        currentY += spacing;
-
-
-        xpThresholdSlider = new EnhancedSlider(leftX, currentY, contentWidth, 18,
-                Text.literal("Efficiency Threshold: " + (int)(config.xpReductionThreshold * 100) + "%"),
-                (config.xpReductionThreshold - 0.3) / 0.6, "percentage") {
-            @Override
-            protected void updateMessage() {
-                double threshold = 0.3 + (this.value * 0.6);
-                config.xpReductionThreshold = threshold;
-                this.setMessage(Text.literal("Efficiency Threshold: " + (int)(threshold * 100) + "%"));
-            }
-        };
-        this.addDrawableChild(xpThresholdSlider);
-
-        currentY += spacing;
-
-
-        efficiencyBreakDurationButton = CyclingButtonWidget.builder((Integer value) ->
-                        Text.literal("Break: " + value + " min"))
-                .values(3, 5, 8, 10, 12, 15, 20)
-                .initially(config.efficiencyBreakDuration)
-                .build(leftX, currentY, 200, 20, Text.literal("Break Duration"));
-        this.addDrawableChild(efficiencyBreakDurationButton);
-
-
-        maxEfficiencySessionsButton = CyclingButtonWidget.builder((Integer value) ->
-                        Text.literal("Max/Day: " + value))
-                .values(3, 4, 5, 6, 8, 10, 12, 15, 20)
-                .initially(config.maxDailyEfficiencySessions)
-                .build(rightX, currentY, 140, 20, Text.literal("Max Sessions"));
-        this.addDrawableChild(maxEfficiencySessionsButton);
-
-        currentY += spacing + 10;
-
-
-        this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 40,
-                Text.literal("§7Monitors McMMO XP rates and takes breaks when efficiency drops below threshold."),
-                this.textRenderer));
-    }
-
-    private void renderSimpleModeTab(int leftX, int rightX, int startY, int spacing, int contentWidth) {
-        int currentY = startY;
-
-
-        this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 20,
-                Text.literal("§6Simple Timed Mode"), this.textRenderer));
-        currentY += 25;
-
-
-        this.addDrawableChild(ButtonWidget.builder(
-                        Text.literal("Simple Mode: " + (config.operatingMode.equals("SIMPLE") ? "§aACTIVE" : "§cINACTIVE")),
-                        button -> {
-                            config.operatingMode = config.operatingMode.equals("SIMPLE") ? "EFFICIENCY" : "SIMPLE";
-                            button.setMessage(Text.literal("Simple Mode: " + (config.operatingMode.equals("SIMPLE") ? "§aACTIVE" : "§cINACTIVE")));
-                            this.init();
-                        })
-                .dimensions(leftX, currentY, contentWidth, 20)
-                .build());
-
-        currentY += spacing;
-
-
-        simpleShootDurationButton = CyclingButtonWidget.builder((Integer value) ->
-                        Text.literal("Shoot: " + value + " min"))
-                .values(5, 10, 15, 20, 25, 30, 45, 60, 90, 120)
-                .initially(config.simpleShootDuration)
-                .build(leftX, currentY, 200, 20, Text.literal("Shoot Duration"));
-        this.addDrawableChild(simpleShootDurationButton);
-
-        simpleBreakDurationButton = CyclingButtonWidget.builder((Integer value) ->
-                        Text.literal("Break: " + value + " min"))
-                .values(1, 2, 3, 5, 8, 10, 15, 20, 30)
-                .initially(config.simpleBreakDuration)
-                .build(rightX, currentY, 140, 20, Text.literal("Break Duration"));
-        this.addDrawableChild(simpleBreakDurationButton);
-
-        currentY += spacing;
-
-
-        this.addDrawableChild(ButtonWidget.builder(
-                        Text.literal("Ignore Daily Limits: " + (config.simpleIgnoreDailyLimits ? "§aYES" : "§cNO")),
-                        button -> {
-                            config.simpleIgnoreDailyLimits = !config.simpleIgnoreDailyLimits;
-                            button.setMessage(Text.literal("Ignore Daily Limits: " + (config.simpleIgnoreDailyLimits ? "§aYES" : "§cNO")));
-                        })
-                .dimensions(leftX, currentY, contentWidth, 20)
-                .build());
-
-        currentY += spacing + 10;
-
-
-        this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 40,
-                Text.literal("§7Shoots for X minutes, then breaks for Y minutes. No XP monitoring or daily limits."),
-                this.textRenderer));
     }
 
     private void renderMovementTab(int leftX, int rightX, int startY, int spacing, int contentWidth) {
@@ -271,7 +111,15 @@ public class AutoBowSettingsScreen extends Screen {
                         button -> {
                             config.enableMovementVariation = !config.enableMovementVariation;
                             button.setMessage(Text.literal("Movement: " + (config.enableMovementVariation ? "§aON" : "§cOFF")));
-                            System.out.println("[Settings] Movement toggled to: " + config.enableMovementVariation);
+
+
+                            config.saveConfig();
+
+
+                            config.enableServerAdaptation = false;
+
+                            System.out.println("[Settings] Movement locked to: " + config.enableMovementVariation +
+                                    " and server adaptation disabled to prevent override");
                         })
                 .dimensions(leftX, currentY, contentWidth, 20)
                 .build());
@@ -289,6 +137,15 @@ public class AutoBowSettingsScreen extends Screen {
         currentY += spacing + 10;
 
 
+        String statusText = config.enableMovementVariation ?
+                "§aMovement is ENABLED with " + getMovementIntensityText() + " intensity" :
+                "§cMovement is DISABLED";
+        this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 20,
+                Text.literal("Status: " + statusText), this.textRenderer));
+
+        currentY += spacing;
+
+
         this.addDrawableChild(ButtonWidget.builder(
                         Text.literal("Advanced Randomization: " + (config.useAdvancedRandomization ? "§aON" : "§cOFF")),
                         button -> {
@@ -301,19 +158,229 @@ public class AutoBowSettingsScreen extends Screen {
         currentY += spacing + 10;
 
 
-        this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 60,
-                Text.literal("§7Movement adds random mouse movements to avoid detection. Turn OFF for pure shooting."),
+        this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 80,
+                Text.literal("§7Movement adds random mouse movements to avoid detection. " +
+                        "Turn OFF for pure shooting without any movement. " +
+                        "§cWARNING: Server Adaptation can override movement settings! " +
+                        "Toggling movement will automatically disable server adaptation."),
+                this.textRenderer));
+    }
+
+    private void renderLearningTab(int leftX, int rightX, int startY, int spacing, int contentWidth) {
+        int currentY = startY;
+
+        this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 20,
+                Text.literal("§6Learning & Adaptation Mode"), this.textRenderer));
+        currentY += 25;
+
+        this.addDrawableChild(ButtonWidget.builder(
+                        Text.literal("Learning Mode: " + (config.operatingMode.equals("LEARNING") ? "§aACTIVE" : "§cINACTIVE")),
+                        button -> {
+                            config.operatingMode = config.operatingMode.equals("LEARNING") ? "SIMPLE" : "LEARNING";
+                            button.setMessage(Text.literal("Learning Mode: " + (config.operatingMode.equals("LEARNING") ? "§aACTIVE" : "§cINACTIVE")));
+                            this.init();
+                        })
+                .dimensions(leftX, currentY, contentWidth, 20)
+                .build());
+
+        currentY += spacing;
+
+
+        this.addDrawableChild(ButtonWidget.builder(
+                        Text.literal("Server Adaptation: " + (config.enableServerAdaptation ? "§aON" : "§cOFF")),
+                        button -> {
+                            config.enableServerAdaptation = !config.enableServerAdaptation;
+                            button.setMessage(Text.literal("Server Adaptation: " + (config.enableServerAdaptation ? "§aON" : "§cOFF")));
+
+
+                            if (config.enableServerAdaptation && client.player != null) {
+                                client.player.sendMessage(
+                                        Text.literal("§e[Auto Bow] WARNING: Server adaptation may override your movement settings!"),
+                                        false
+                                );
+                            }
+                        })
+                .dimensions(leftX, currentY, 200, 20)
+                .build());
+
+        this.addDrawableChild(ButtonWidget.builder(
+                        Text.literal("Re-Learn Server"),
+                        button -> {
+                            ServerProfileManager.forceOptimizeCurrentServer();
+                            if (client.player != null) {
+                                client.player.sendMessage(Text.literal("§a[Auto Bow] Started re-learning server"), false);
+                            }
+                        })
+                .dimensions(rightX, currentY, 140, 20)
+                .build());
+
+        currentY += spacing;
+
+        this.addDrawableChild(ButtonWidget.builder(
+                        Text.literal("Adaptation Messages: " + (config.showAdaptationMessages ? "§aON" : "§cOFF")),
+                        button -> {
+                            config.showAdaptationMessages = !config.showAdaptationMessages;
+                            button.setMessage(Text.literal("Adaptation Messages: " + (config.showAdaptationMessages ? "§aON" : "§cOFF")));
+                        })
+                .dimensions(leftX, currentY, contentWidth, 20)
+                .build());
+
+        currentY += spacing + 10;
+
+
+        this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 80,
+                Text.literal("§7Combines efficiency monitoring with server-specific adaptation and learning. " +
+                        "§cWARNING: Server adaptation automatically changes movement settings " +
+                        "to optimize performance. Disable if you want manual movement control."),
+                this.textRenderer));
+    }
+
+
+    private void renderEfficiencyTab(int leftX, int rightX, int startY, int spacing, int contentWidth) {
+        int currentY = startY;
+
+        this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 20,
+                Text.literal("§6Efficiency-Based Mode"), this.textRenderer));
+        currentY += 25;
+
+        this.addDrawableChild(ButtonWidget.builder(
+                        Text.literal("Efficiency Mode: " + (config.operatingMode.equals("EFFICIENCY") ? "§aACTIVE" : "§cINACTIVE")),
+                        button -> {
+                            config.operatingMode = config.operatingMode.equals("EFFICIENCY") ? "SIMPLE" : "EFFICIENCY";
+                            button.setMessage(Text.literal("Efficiency Mode: " + (config.operatingMode.equals("EFFICIENCY") ? "§aACTIVE" : "§cINACTIVE")));
+                            this.init();
+                        })
+                .dimensions(leftX, currentY, contentWidth, 20)
+                .build());
+
+        currentY += spacing;
+
+        this.addDrawableChild(ButtonWidget.builder(
+                        Text.literal("Bossbar XP Monitor: " + (config.enableBossbarXpMonitoring ? "§aON" : "§cOFF")),
+                        button -> {
+                            config.enableBossbarXpMonitoring = !config.enableBossbarXpMonitoring;
+                            button.setMessage(Text.literal("Bossbar XP Monitor: " + (config.enableBossbarXpMonitoring ? "§aON" : "§cOFF")));
+                            if (config.enableBossbarXpMonitoring) {
+                                BossbarXpMonitor.startMonitoring();
+                            } else {
+                                BossbarXpMonitor.stopMonitoring();
+                            }
+                        })
+                .dimensions(leftX, currentY, contentWidth, 20)
+                .build());
+
+        currentY += spacing;
+
+        xpCheckIntervalButton = CyclingButtonWidget.builder((Integer value) ->
+                        Text.literal("XP Check: " + value + "ms"))
+                .values(500, 1000, 1500, 2000, 3000, 5000)
+                .initially((int)config.xpCheckInterval)
+                .build(leftX, currentY, 200, 20, Text.literal("XP Check Interval"));
+        this.addDrawableChild(xpCheckIntervalButton);
+
+        this.addDrawableChild(ButtonWidget.builder(
+                        Text.literal("Debug: " + (config.showBossbarDebugInfo ? "§aON" : "§cOFF")),
+                        button -> {
+                            config.showBossbarDebugInfo = !config.showBossbarDebugInfo;
+                            button.setMessage(Text.literal("Debug: " + (config.showBossbarDebugInfo ? "§aON" : "§cOFF")));
+                        })
+                .dimensions(rightX, currentY, 140, 20)
+                .build());
+
+        currentY += spacing;
+
+        xpThresholdSlider = new EnhancedSlider(leftX, currentY, contentWidth, 18,
+                Text.literal("Efficiency Threshold: " + (int)(config.xpReductionThreshold * 100) + "%"),
+                (config.xpReductionThreshold - 0.3) / 0.6, "percentage") {
+            @Override
+            protected void updateMessage() {
+                double threshold = 0.3 + (this.value * 0.6);
+                config.xpReductionThreshold = threshold;
+                this.setMessage(Text.literal("Efficiency Threshold: " + (int)(threshold * 100) + "%"));
+            }
+        };
+        this.addDrawableChild(xpThresholdSlider);
+
+        currentY += spacing;
+
+        efficiencyBreakDurationButton = CyclingButtonWidget.builder((Integer value) ->
+                        Text.literal("Break: " + value + " min"))
+                .values(3, 5, 8, 10, 12, 15, 20)
+                .initially(config.efficiencyBreakDuration)
+                .build(leftX, currentY, 200, 20, Text.literal("Break Duration"));
+        this.addDrawableChild(efficiencyBreakDurationButton);
+
+        maxEfficiencySessionsButton = CyclingButtonWidget.builder((Integer value) ->
+                        Text.literal("Max/Day: " + value))
+                .values(3, 4, 5, 6, 8, 10, 12, 15, 20)
+                .initially(config.maxDailyEfficiencySessions)
+                .build(rightX, currentY, 140, 20, Text.literal("Max Sessions"));
+        this.addDrawableChild(maxEfficiencySessionsButton);
+
+        currentY += spacing + 10;
+
+        this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 40,
+                Text.literal("§7Monitors McMMO XP rates and takes breaks when efficiency drops below threshold."),
+                this.textRenderer));
+    }
+
+    private void renderSimpleModeTab(int leftX, int rightX, int startY, int spacing, int contentWidth) {
+        int currentY = startY;
+
+        this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 20,
+                Text.literal("§6Simple Timed Mode"), this.textRenderer));
+        currentY += 25;
+
+        this.addDrawableChild(ButtonWidget.builder(
+                        Text.literal("Simple Mode: " + (config.operatingMode.equals("SIMPLE") ? "§aACTIVE" : "§cINACTIVE")),
+                        button -> {
+                            config.operatingMode = config.operatingMode.equals("SIMPLE") ? "EFFICIENCY" : "SIMPLE";
+                            button.setMessage(Text.literal("Simple Mode: " + (config.operatingMode.equals("SIMPLE") ? "§aACTIVE" : "§cINACTIVE")));
+                            this.init();
+                        })
+                .dimensions(leftX, currentY, contentWidth, 20)
+                .build());
+
+        currentY += spacing;
+
+        simpleShootDurationButton = CyclingButtonWidget.builder((Integer value) ->
+                        Text.literal("Shoot: " + value + " min"))
+                .values(5, 10, 15, 20, 25, 30, 45, 60, 90, 120)
+                .initially(config.simpleShootDuration)
+                .build(leftX, currentY, 200, 20, Text.literal("Shoot Duration"));
+        this.addDrawableChild(simpleShootDurationButton);
+
+        simpleBreakDurationButton = CyclingButtonWidget.builder((Integer value) ->
+                        Text.literal("Break: " + value + " min"))
+                .values(1, 2, 3, 5, 8, 10, 15, 20, 30)
+                .initially(config.simpleBreakDuration)
+                .build(rightX, currentY, 140, 20, Text.literal("Break Duration"));
+        this.addDrawableChild(simpleBreakDurationButton);
+
+        currentY += spacing;
+
+        this.addDrawableChild(ButtonWidget.builder(
+                        Text.literal("Ignore Daily Limits: " + (config.simpleIgnoreDailyLimits ? "§aYES" : "§cNO")),
+                        button -> {
+                            config.simpleIgnoreDailyLimits = !config.simpleIgnoreDailyLimits;
+                            button.setMessage(Text.literal("Ignore Daily Limits: " + (config.simpleIgnoreDailyLimits ? "§aYES" : "§cNO")));
+                        })
+                .dimensions(leftX, currentY, contentWidth, 20)
+                .build());
+
+        currentY += spacing + 10;
+
+        this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 40,
+                Text.literal("§7Shoots for X minutes, then breaks for Y minutes. No XP monitoring or daily limits."),
                 this.textRenderer));
     }
 
     private void renderTimingTab(int leftX, int rightX, int startY, int spacing, int contentWidth) {
         int currentY = startY;
 
-
         this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 20,
                 Text.literal("§6Draw Time Range"), this.textRenderer));
         currentY += 20;
-
 
         minDrawTimeSlider = new EnhancedSlider(leftX, currentY, 140, 18,
                 Text.literal("Min: " + ticksToSeconds(config.minDrawTime)),
@@ -345,7 +412,6 @@ public class AutoBowSettingsScreen extends Screen {
         this.addDrawableChild(maxDrawTimeSlider);
 
         currentY += spacing + 10;
-
 
         this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 20,
                 Text.literal("§6Cooldown Range"), this.textRenderer));
@@ -382,7 +448,6 @@ public class AutoBowSettingsScreen extends Screen {
 
         currentY += spacing + 10;
 
-
         this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 20,
                 Text.literal("§6Durability Protection"), this.textRenderer));
         currentY += 20;
@@ -411,76 +476,12 @@ public class AutoBowSettingsScreen extends Screen {
         this.addDrawableChild(durabilityThresholdSlider);
     }
 
-    private void renderLearningTab(int leftX, int rightX, int startY, int spacing, int contentWidth) {
-        int currentY = startY;
-
-
-        this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 20,
-                Text.literal("§6Learning & Adaptation Mode"), this.textRenderer));
-        currentY += 25;
-
-
-        this.addDrawableChild(ButtonWidget.builder(
-                        Text.literal("Learning Mode: " + (config.operatingMode.equals("LEARNING") ? "§aACTIVE" : "§cINACTIVE")),
-                        button -> {
-                            config.operatingMode = config.operatingMode.equals("LEARNING") ? "SIMPLE" : "LEARNING";
-                            button.setMessage(Text.literal("Learning Mode: " + (config.operatingMode.equals("LEARNING") ? "§aACTIVE" : "§cINACTIVE")));
-                            this.init();
-                        })
-                .dimensions(leftX, currentY, contentWidth, 20)
-                .build());
-
-        currentY += spacing;
-
-
-        this.addDrawableChild(ButtonWidget.builder(
-                        Text.literal("Server Adaptation: " + (config.enableServerAdaptation ? "§aON" : "§cOFF")),
-                        button -> {
-                            config.enableServerAdaptation = !config.enableServerAdaptation;
-                            button.setMessage(Text.literal("Server Adaptation: " + (config.enableServerAdaptation ? "§aON" : "§cOFF")));
-                        })
-                .dimensions(leftX, currentY, 200, 20)
-                .build());
-
-        this.addDrawableChild(ButtonWidget.builder(
-                        Text.literal("Re-Learn Server"),
-                        button -> {
-                            ServerProfileManager.forceOptimizeCurrentServer();
-                            if (client.player != null) {
-                                client.player.sendMessage(Text.literal("§a[Auto Bow] Started re-learning server"), false);
-                            }
-                        })
-                .dimensions(rightX, currentY, 140, 20)
-                .build());
-
-        currentY += spacing;
-
-
-        this.addDrawableChild(ButtonWidget.builder(
-                        Text.literal("Adaptation Messages: " + (config.showAdaptationMessages ? "§aON" : "§cOFF")),
-                        button -> {
-                            config.showAdaptationMessages = !config.showAdaptationMessages;
-                            button.setMessage(Text.literal("Adaptation Messages: " + (config.showAdaptationMessages ? "§aON" : "§cOFF")));
-                        })
-                .dimensions(leftX, currentY, contentWidth, 20)
-                .build());
-
-        currentY += spacing + 10;
-
-
-        this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 60,
-                Text.literal("§7Combines efficiency monitoring with server-specific adaptation and learning."),
-                this.textRenderer));
-    }
-
     private void renderHudTab(int leftX, int rightX, int startY, int spacing, int contentWidth) {
         int currentY = startY;
-
 
         this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 20,
                 Text.literal("§6HUD Display Options"), this.textRenderer));
         currentY += 25;
-
 
         this.addDrawableChild(ButtonWidget.builder(
                         Text.literal("Show HUD: " + (config.showHudOverlay ? "§aON" : "§cOFF")),
@@ -492,7 +493,6 @@ public class AutoBowSettingsScreen extends Screen {
                 .build());
 
         currentY += spacing;
-
 
         hudPositionButton = CyclingButtonWidget.builder((String value) ->
                         Text.literal("Position: " + value))
@@ -510,11 +510,9 @@ public class AutoBowSettingsScreen extends Screen {
 
         currentY += spacing;
 
-
         this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 20,
                 Text.literal("§6HUD Elements"), this.textRenderer));
         currentY += 25;
-
 
         this.addDrawableChild(ButtonWidget.builder(
                         Text.literal("Show XP Rate: " + (config.showXpRate ? "§aON" : "§cOFF")),
@@ -621,7 +619,6 @@ public class AutoBowSettingsScreen extends Screen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderBackground(context, mouseX, mouseY, delta);
 
-
         int centerX = this.width / 2;
         int contentWidth = Math.min(600, this.width - 40);
         int leftX = centerX - contentWidth / 2;
@@ -631,7 +628,6 @@ public class AutoBowSettingsScreen extends Screen {
 
         super.render(context, mouseX, mouseY, delta);
 
-
         context.drawCenteredTextWithShadow(this.textRenderer,
                 "Tab: " + tabNames[currentTab] + " • Mode: " + config.operatingMode,
                 this.width / 2, this.height - 15, 0x808080);
@@ -639,6 +635,9 @@ public class AutoBowSettingsScreen extends Screen {
 
     private void saveAndClose() {
         try {
+            System.out.println("[Settings] Starting save process...");
+            System.out.println("[Settings] Current movement state: enabled=" + config.enableMovementVariation + ", intensity=" + config.movementIntensity);
+
 
             if (xpCheckIntervalButton != null) config.xpCheckInterval = xpCheckIntervalButton.getValue();
             if (simpleShootDurationButton != null) config.simpleShootDuration = simpleShootDurationButton.getValue();
@@ -649,7 +648,7 @@ public class AutoBowSettingsScreen extends Screen {
             if (hudScaleButton != null) config.hudScale = hudScaleButton.getValue();
 
 
-            if (movementIntensityButton != null) {
+            if (movementIntensityButton != null && config.enableMovementVariation) {
                 String intensityValue = movementIntensityButton.getValue();
                 switch (intensityValue) {
                     case "Low": config.movementIntensity = 1; break;
@@ -657,13 +656,15 @@ public class AutoBowSettingsScreen extends Screen {
                     case "High": config.movementIntensity = 3; break;
                     default: config.movementIntensity = 1; break;
                 }
-                System.out.println("[Settings] Movement intensity set to: " + config.movementIntensity);
+                System.out.println("[Settings] Movement intensity updated to: " + config.movementIntensity);
             }
 
             System.out.println("[Settings] Final save state - Movement enabled: " + config.enableMovementVariation +
                     ", Intensity: " + config.movementIntensity + ", Mode: " + config.operatingMode);
 
+
             config.saveConfig();
+
             this.client.setScreen(parent);
         } catch (Exception e) {
             System.err.println("[Settings Error] Failed to save settings: " + e.getMessage());
@@ -680,7 +681,6 @@ public class AutoBowSettingsScreen extends Screen {
     public void close() {
         this.client.setScreen(parent);
     }
-
 
     private abstract class EnhancedSlider extends SliderWidget {
         private final String unit;

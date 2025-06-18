@@ -196,9 +196,11 @@ public class AutoBowConfig {
 
     public void saveConfig() {
         File configFile = getConfigFile();
-        System.out.println("[Config] Saving config to: " + configFile.getAbsolutePath());
-        System.out.println("[Config] Movement state being saved: " + enableMovementVariation + ", Intensity: " + movementIntensity);
-        System.out.println("[Config] Operating mode being saved: " + operatingMode);
+        System.out.println("[Config] === SAVING CONFIG ===");
+        System.out.println("[Config] Movement enabled: " + enableMovementVariation);
+        System.out.println("[Config] Movement intensity: " + movementIntensity);
+        System.out.println("[Config] Operating mode: " + operatingMode);
+        System.out.println("[Config] Saving to: " + configFile.getAbsolutePath());
 
         try {
             File parentDir = configFile.getParentFile();
@@ -215,20 +217,8 @@ public class AutoBowConfig {
             System.err.println("[Config] Failed to save config: " + e.getMessage());
             e.printStackTrace();
         }
-    }
 
-    private void fixFilePermissions(Path path) {
-        try {
-            if (!System.getProperty("os.name").toLowerCase().contains("win")) {
-                Set<PosixFilePermission> perms = new HashSet<>();
-                perms.add(PosixFilePermission.OWNER_READ);
-                perms.add(PosixFilePermission.OWNER_WRITE);
-                Files.setPosixFilePermissions(path, perms);
-                System.out.println("[Config] Fixed file permissions for: " + path);
-            }
-        } catch (Exception e) {
-            System.err.println("[Config] Could not fix file permissions: " + e.getMessage());
-        }
+        System.out.println("[Config] === SAVE COMPLETE ===");
     }
 
 
@@ -266,7 +256,24 @@ public class AutoBowConfig {
         }
 
 
+        System.out.println("[Config] Validation complete - Movement settings preserved: enabled=" + enableMovementVariation + ", intensity=" + movementIntensity);
     }
+
+
+    private void fixFilePermissions(Path path) {
+        try {
+            if (!System.getProperty("os.name").toLowerCase().contains("win")) {
+                Set<PosixFilePermission> perms = new HashSet<>();
+                perms.add(PosixFilePermission.OWNER_READ);
+                perms.add(PosixFilePermission.OWNER_WRITE);
+                Files.setPosixFilePermissions(path, perms);
+                System.out.println("[Config] Fixed file permissions for: " + path);
+            }
+        } catch (Exception e) {
+            System.err.println("[Config] Could not fix file permissions: " + e.getMessage());
+        }
+    }
+
 
     public void resetToDefaults() {
         AutoBowConfig defaultConfig = createDefault();

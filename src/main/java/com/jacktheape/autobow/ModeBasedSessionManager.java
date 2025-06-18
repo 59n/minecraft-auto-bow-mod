@@ -111,29 +111,21 @@ public class ModeBasedSessionManager {
     }
 
     private static void handleEfficiencyMode(MinecraftClient client, AutoBowConfig config) {
-
-        checkDailyReset(config);
-        if (config.sessionsCompletedToday >= config.maxDailyEfficiencySessions) {
-            if (config.showSessionNotifications && client.player != null) {
-                client.player.sendMessage(
-                        Text.literal("§c[Auto Bow] Daily efficiency limit reached (" +
-                                config.sessionsCompletedToday + "/" + config.maxDailyEfficiencySessions + ")"),
-                        false
-                );
+        if (config.enableDailySessionLimits) {
+            checkDailyReset(config);
+            if (config.sessionsCompletedToday >= config.maxDailyEfficiencySessions) {
+                handleDailyLimitReached(client, config);
+                return;
             }
-            AutoBowHandler.disableDueToSessionLimit();
-            return;
         }
 
         long currentTime = System.currentTimeMillis();
 
         if (efficiencySessionActive) {
-
             if (currentTime - lastEfficiencyCheck > 15000) {
                 checkEfficiencyAndAdapt(client, config, currentTime);
                 lastEfficiencyCheck = currentTime;
             }
-
 
             long sessionDuration = currentTime - efficiencySessionStartTime;
             long maxSessionDuration = config.maxEfficiencySessionDuration * 60 * 1000;
@@ -151,6 +143,59 @@ public class ModeBasedSessionManager {
             startEfficiencySession(client, config);
         }
     }
+
+    private static void handleDailyLimitReached(MinecraftClient client, AutoBowConfig config) {
+        if (AutoBowHandler.isEnabled()) {
+            AutoBowHandler.disableDueToSessionLimit();
+
+            if (config.showDailyLimitMessages && client.player != null) {
+                client.player.sendMessage(
+                        Text.literal("§c[Auto Bow] Daily limit reached (" +
+                                config.sessionsCompletedToday + "/" + config.maxDailyEfficiencySessions + ") - Auto bow disabled"),
+                        false
+                );
+            }
+
+            if (config.enableDebugMode) {
+                System.out.println("[Efficiency Mode] Daily limit reached - auto bow disabled silently");
+            }
+        }
+
+    }
+
+    private static void endEfficiencySession(MinecraftClient client, AutoBowConfig config, String reason) {
+        efficiencySessionActive = false;
+        efficiencyBreakActive = true;
+        efficiencyBreakStartTime = System.currentTimeMillis();
+
+        long sessionDuration = efficiencyBreakStartTime - efficiencySessionStartTime;
+
+        if (config.enableDailySessionLimits) {
+            config.sessionsCompletedToday++;
+            config.totalFarmingTimeToday += sessionDuration;
+            config.saveConfig();
+        }
+
+        AutoBowHandler.pauseForBreak();
+
+        if (config.showSessionNotifications && client.player != null) {
+            client.player.sendMessage(
+                    Text.literal("§e[Auto Bow] Session ended: " + reason),
+                    false
+            );
+            client.player.sendMessage(
+                    Text.literal("§e[Auto Bow] Taking " + config.efficiencyBreakDuration + " minute break"),
+                    false
+            );
+        }
+
+        if (config.enableDebugMode) {
+            System.out.println("[Efficiency Mode] Session ended: " + reason);
+        }
+
+        consecutiveLowEfficiencyReadings = 0;
+    }
+
 
     private static void handleLearningMode(MinecraftClient client, AutoBowConfig config) {
 
@@ -207,36 +252,6 @@ public class ModeBasedSessionManager {
         if (config.enableDebugMode) {
             System.out.println("[Efficiency Mode] Started session " + currentSessionNumber);
         }
-    }
-
-    private static void endEfficiencySession(MinecraftClient client, AutoBowConfig config, String reason) {
-        efficiencySessionActive = false;
-        efficiencyBreakActive = true;
-        efficiencyBreakStartTime = System.currentTimeMillis();
-
-        long sessionDuration = efficiencyBreakStartTime - efficiencySessionStartTime;
-        config.sessionsCompletedToday++;
-        config.totalFarmingTimeToday += sessionDuration;
-        config.saveConfig();
-
-        AutoBowHandler.pauseForBreak();
-
-        if (config.showSessionNotifications && client.player != null) {
-            client.player.sendMessage(
-                    Text.literal("§e[Auto Bow] Session ended: " + reason),
-                    false
-            );
-            client.player.sendMessage(
-                    Text.literal("§e[Auto Bow] Taking " + config.efficiencyBreakDuration + " minute break"),
-                    false
-            );
-        }
-
-        if (config.enableDebugMode) {
-            System.out.println("[Efficiency Mode] Session ended: " + reason);
-        }
-
-        consecutiveLowEfficiencyReadings = 0;
     }
 
     private static void endEfficiencyBreak(MinecraftClient client, AutoBowConfig config) {

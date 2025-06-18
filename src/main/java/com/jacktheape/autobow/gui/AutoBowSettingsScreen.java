@@ -310,19 +310,51 @@ public class AutoBowSettingsScreen extends Screen {
                 .build(leftX, currentY, 200, 20, Text.literal("Break Duration"));
         this.addDrawableChild(efficiencyBreakDurationButton);
 
-        maxEfficiencySessionsButton = CyclingButtonWidget.builder((Integer value) ->
-                        Text.literal("Max/Day: " + value))
-                .values(3, 4, 5, 6, 8, 10, 12, 15, 20)
-                .initially(config.maxDailyEfficiencySessions)
-                .build(rightX, currentY, 140, 20, Text.literal("Max Sessions"));
-        this.addDrawableChild(maxEfficiencySessionsButton);
+        currentY += spacing + 10;
+
+        this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 20,
+                Text.literal("§6Daily Session Limits (Optional)"), this.textRenderer));
+        currentY += 25;
+
+        this.addDrawableChild(ButtonWidget.builder(
+                        Text.literal("Daily Limits: " + (config.enableDailySessionLimits ? "§aENABLED" : "§cDISABLED")),
+                        button -> {
+                            config.enableDailySessionLimits = !config.enableDailySessionLimits;
+                            button.setMessage(Text.literal("Daily Limits: " + (config.enableDailySessionLimits ? "§aENABLED" : "§cDISABLED")));
+                        })
+                .dimensions(leftX, currentY, contentWidth, 20)
+                .build());
+
+        currentY += spacing;
+
+        if (config.enableDailySessionLimits) {
+            maxEfficiencySessionsButton = CyclingButtonWidget.builder((Integer value) ->
+                            Text.literal("Max/Day: " + value))
+                    .values(3, 4, 5, 6, 8, 10, 12, 15, 20, 999) // 999 = unlimited
+                    .initially(config.maxDailyEfficiencySessions)
+                    .build(leftX, currentY, 200, 20, Text.literal("Max Sessions"));
+            this.addDrawableChild(maxEfficiencySessionsButton);
+
+            this.addDrawableChild(ButtonWidget.builder(
+                            Text.literal("Limit Messages: " + (config.showDailyLimitMessages ? "§aON" : "§cOFF")),
+                            button -> {
+                                config.showDailyLimitMessages = !config.showDailyLimitMessages;
+                                button.setMessage(Text.literal("Limit Messages: " + (config.showDailyLimitMessages ? "§aON" : "§cOFF")));
+                            })
+                    .dimensions(rightX, currentY, 140, 20)
+                    .build());
+
+            currentY += spacing;
+        }
 
         currentY += spacing + 10;
 
-        this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 40,
-                Text.literal("§7Monitors McMMO XP rates and takes breaks when efficiency drops below threshold."),
+        this.addDrawableChild(new TextWidget(leftX, currentY, contentWidth, 60,
+                Text.literal("§7Monitors McMMO XP rates and takes breaks when efficiency drops. " +
+                        "Daily limits are optional - disable for unlimited sessions."),
                 this.textRenderer));
     }
+
 
     private void renderSimpleModeTab(int leftX, int rightX, int startY, int spacing, int contentWidth) {
         int currentY = startY;

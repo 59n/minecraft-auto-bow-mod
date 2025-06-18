@@ -53,6 +53,8 @@ public class AutoBowConfig {
     public boolean enableServerAdaptation = true;
     public boolean showAdaptationMessages = true;
 
+    public boolean enableDailySessionLimits = false; // NEW: Toggle for daily limits
+    public boolean showDailyLimitMessages = false; // NEW: Control limit messages
 
     public boolean enableBossbarXpMonitoring = true;
     public boolean showBossbarDebugInfo = false;

@@ -58,7 +58,9 @@ public class HudOverlay {
         int hudX = position.x;
         int hudY = position.y;
         int hudWidth = position.width;
-        int hudHeight = calculateHudHeight(config);
+
+
+        int actualContentHeight = calculateActualContentHeight(config);
 
 
         float scale = config.hudScale / 100.0f;
@@ -69,10 +71,11 @@ public class HudOverlay {
         hudX = (int) (hudX / scale);
         hudY = (int) (hudY / scale);
         hudWidth = (int) (hudWidth / scale);
+        actualContentHeight = (int) (actualContentHeight / scale);
 
 
-        context.fill(hudX - 5, hudY - 5, hudX + hudWidth + 5, hudY + hudHeight + 5, 0x90000000);
-        context.drawBorder(hudX - 5, hudY - 5, hudWidth + 10, hudHeight + 10, 0xFF555555);
+        context.fill(hudX - 5, hudY - 5, hudX + hudWidth + 5, hudY + actualContentHeight + 5, 0x90000000);
+        context.drawBorder(hudX - 5, hudY - 5, hudWidth + 10, actualContentHeight + 10, 0xFF555555);
 
 
         String titleText = "§6Auto Bow - " + config.operatingMode + " Mode";
@@ -104,6 +107,7 @@ public class HudOverlay {
                     hudX, hudY, 0xFFFFFF, true);
             hudY += 10;
 
+
             String comparisonText = String.format("%.1fx baseline", baselineComparison);
             String comparisonColor = baselineComparison >= 1.5 ? "§a" : baselineComparison >= 1.0 ? "§e" : "§c";
             context.drawText(client.textRenderer,
@@ -111,7 +115,6 @@ public class HudOverlay {
                     hudX, hudY, 0xFFFFFF, true);
             hudY += 10;
         }
-
 
 
         if (config.showEfficiency && config.enableBossbarXpMonitoring && BossbarXpMonitor.isMonitoring()) {
@@ -258,17 +261,37 @@ public class HudOverlay {
 
 
             if (!config.operatingMode.equals("SIMPLE")) {
-                String sessionText = "§7Sessions: " + config.sessionsCompletedToday + "/" +
-                        (config.operatingMode.equals("EFFICIENCY") ? config.maxDailyEfficiencySessions : config.maxDailyFarmingSessions);
+                if (config.enableDailySessionLimits) {
 
-                if (config.enableBossbarXpMonitoring && BossbarXpMonitor.isMonitoring()) {
-                    long totalXpToday = BossbarXpMonitor.getTotalXpToday();
-                    if (totalXpToday > 0) {
-                        sessionText += " (§e" + formatNumber(totalXpToday) + " XP§7)";
+                    String sessionText = "§7Sessions: " + config.sessionsCompletedToday + "/" +
+                            config.maxDailyEfficiencySessions;
+
+                    if (config.enableBossbarXpMonitoring && BossbarXpMonitor.isMonitoring()) {
+                        long totalXpToday = BossbarXpMonitor.getTotalXpToday();
+                        if (totalXpToday > 0) {
+                            sessionText += " (§e" + formatNumber(totalXpToday) + " XP§7)";
+                        }
+                    }
+                    context.drawText(client.textRenderer, Text.literal(sessionText), hudX, hudY, 0xFFFFFF, true);
+                    hudY += 10;
+                } else {
+
+                    context.drawText(client.textRenderer,
+                            Text.literal("§7Mode: §aUnlimited Sessions"),
+                            hudX, hudY, 0xFFFFFF, true);
+                    hudY += 10;
+
+
+                    if (config.enableBossbarXpMonitoring && BossbarXpMonitor.isMonitoring()) {
+                        long totalXpToday = BossbarXpMonitor.getTotalXpToday();
+                        if (totalXpToday > 0) {
+                            context.drawText(client.textRenderer,
+                                    Text.literal("§7Today: §e" + formatNumber(totalXpToday) + " XP"),
+                                    hudX, hudY, 0xFFFFFF, true);
+                            hudY += 10;
+                        }
                     }
                 }
-                context.drawText(client.textRenderer, Text.literal(sessionText), hudX, hudY, 0xFFFFFF, true);
-                hudY += 10;
             } else if (config.operatingMode.equals("SIMPLE") && config.enableBossbarXpMonitoring && BossbarXpMonitor.isMonitoring()) {
 
                 long totalXpToday = BossbarXpMonitor.getTotalXpToday();
@@ -382,42 +405,65 @@ public class HudOverlay {
         }
     }
 
-    private static int calculateHudHeight(AutoBowConfig config) {
-        int baseHeight = 80;
+
+    private static int calculateActualContentHeight(AutoBowConfig config) {
+        int height = 25;
+
 
         if (config.showXpRate && config.enableBossbarXpMonitoring) {
-            baseHeight += 10;
+            height += 20;
         }
+
 
         if (config.showEfficiency && config.enableBossbarXpMonitoring) {
-            baseHeight += 20;
+            height += 18;
         }
+
 
         if (config.enableServerAdaptation) {
-            baseHeight += 20;
+            height += 20;
         }
 
+
         if (config.showSessionInfo) {
-            switch (config.operatingMode) {
-                case "SIMPLE":
-                    baseHeight += 40;
-                    break;
-                case "EFFICIENCY":
-                    baseHeight += 60;
-                    break;
-                case "LEARNING":
-                    baseHeight += 50;
-                    break;
+            height += 10;
+
+            if (ModeBasedSessionManager.isInSession()) {
+                switch (config.operatingMode) {
+                    case "SIMPLE":
+                        height += 20;
+                        break;
+                    case "EFFICIENCY":
+                        height += 30;
+                        break;
+                    case "LEARNING":
+                        height += 20;
+                        break;
+                }
+            } else if (ModeBasedSessionManager.isInBreak()) {
+                height += 28;
+            }
+
+
+            if (!config.operatingMode.equals("SIMPLE")) {
+                height += 10;
+            } else if (config.enableBossbarXpMonitoring) {
+                height += 10;
             }
         }
 
+
+        height += 18;
+
+
         if (config.showDurability) {
-            baseHeight += 25;
+            height += 25;
         }
 
-        baseHeight += 50;
 
-        return baseHeight;
+        height += 40;
+
+        return height;
     }
 
     private static String getMovementIntensityText(int intensity) {

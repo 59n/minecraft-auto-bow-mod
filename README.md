@@ -1,5 +1,7 @@
 # Auto Bow Mod for Minecraft 1.21 Fabric
 
+[![Build](https://github.com/59n/minecraft-auto-bow-mod/actions/workflows/build.yml/badge.svg)](https://github.com/59n/minecraft-auto-bow-mod/actions/workflows/build.yml)
+
 An advanced auto bow modification for Minecraft 1.21 that provides intelligent automated bow shooting with sophisticated anti-detection features.
 
 ## Features

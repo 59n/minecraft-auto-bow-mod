@@ -1,7 +1,5 @@
 # Auto Bow Mod for Minecraft 1.21 Fabric
 
-[![Build](https://github.com/59n/minecraft-auto-bow-mod/actions/workflows/github.com/59n/minecraft-auto-bow-mod/actions/workflows/builimg.shields.io/modrinth/dt/autobow?label=Modrinth%20Downloads&tps://img.shields.io/github/v/release/59n/minecraft-auto-bow-mod?label/59n/minecraft-auto-bow-mod/releases/d auto bow modification for Minecraft 1.21 that provides intelligent automated bow shooting with **real McMMO XP monitoring** and **efficiency-based session management**.
-
 ## 🎯 Key Features
 
 ### Three Smart Operating Modes

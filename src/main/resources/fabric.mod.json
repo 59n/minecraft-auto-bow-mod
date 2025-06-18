@@ -3,20 +3,19 @@
 	"id": "autobow",
 	"version": "${version}",
 	"name": "Auto Bow Mod",
-	"description": "This is an example description! Tell everyone what your mod is about!",
-	"authors": [
-		"Me!"
-	],
+	"description": "A professional, robust, and user-friendly auto bow solution for Minecraft 1.21 Fabric, perfect for both casual and advanced users",
+	"authors": ["59n"],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/59n/minecraft-auto-bow-mod",
+		"issues": "https://github.com/59n/minecraft-auto-bow-mod/issues"
 	},
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/autobow/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": ["com.jacktheape.autobow.AutoBowMod"],
-		"client": ["com.jacktheape.autobow.AutoBowClient"]
+		"client": ["com.jacktheape.autobow.AutoBowClient"],
+		"modmenu": ["com.jacktheape.autobow.AutobowModMenuApi"]
 	},
 	"mixins": [
 		"autobow.mixins.json"

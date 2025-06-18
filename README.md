@@ -160,7 +160,7 @@ Contributions are welcome! Please feel free to submit a Pull Request or open an 
 
 ## 🔗 Links
 
-- **[Modrinth Page](h[ttps://modrinth.com/mod/autobow](https://modrinth.com/mod/auto-bow-efficiency-based-mcmmo-farming))**
+- **[Modrinth Page](https://modrinth.com/mod/auto-bow-efficiency-based-mcmmo-farming)**
 - **[GitHub Repository](https://github.com/59n/minecraft-auto-bow-mod)**
 - **[Issues & Bug Reports](https://github.com/59n/minecraft-auto-bow-mod/issues)**
 - **[Latest Release](https://github.com/59n/minecraft-auto-bow-mod/releases/latest)**

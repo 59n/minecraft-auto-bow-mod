@@ -1,0 +1,7 @@
+{
+  "key.autobow.toggle": "Toggle Auto Bow",
+  "key.autobow.force_enable": "Force Enable Auto Bow",
+  "key.autobow.check_durability": "Check Bow Durability",
+  "key.autobow.open_settings": "Open Auto Bow Settings",
+  "category.autobow": "Auto Bow Mod"
+}

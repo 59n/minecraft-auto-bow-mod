@@ -28,7 +28,7 @@ An advanced auto bow modification for Minecraft 1.21 that provides intelligent a
 - Java 21
 
 ### Steps
-1. Download the latest release from the page
+1. Download the latest release from the [releases](https://github.com/59n/minecraft-auto-bow-mod/releases) page
 2. Place the `.jar` file in your `mods` folder
 3. Ensure Fabric API is also installed
 4. Launch Minecraft with the Fabric profile

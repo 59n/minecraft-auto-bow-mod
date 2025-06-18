@@ -16,7 +16,7 @@ public class AmmoManager {
     public static void checkAmmunition() {
         if (client.player == null) return;
 
-        // Skip ammunition checks if player has infinite arrows
+ 
         if (hasInfiniteArrows()) {
             resetWarnings();
             return;
@@ -25,7 +25,7 @@ public class AmmoManager {
         int currentArrowCount = getArrowCount();
         AutoBowConfig config = AutoBowConfig.getInstance();
 
-        // Check for ammunition depletion (only for non-infinite scenarios)
+ 
         if (currentArrowCount == 0 && !hasWarnedNoAmmo) {
             if (config.showStatusMessages) {
                 client.player.sendMessage(
@@ -37,7 +37,7 @@ public class AmmoManager {
             hasWarnedNoAmmo = true;
             hasWarnedLowAmmo = false;
         }
-        // Check for low ammunition warning
+ 
         else if (currentArrowCount <= 16 && currentArrowCount > 0 && !hasWarnedLowAmmo) {
             if (config.showStatusMessages) {
                 client.player.sendMessage(
@@ -47,13 +47,13 @@ public class AmmoManager {
             }
             hasWarnedLowAmmo = true;
         }
-        // Reset warnings when ammo is restocked
+ 
         else if (currentArrowCount > 16) {
             hasWarnedLowAmmo = false;
             hasWarnedNoAmmo = false;
         }
 
-        // Log arrow count changes in debug mode
+ 
         if (config.enableDebugMode && currentArrowCount != lastArrowCount) {
             System.out.println("[Auto Bow Debug] Arrow count changed: " +
                     lastArrowCount + " -> " + currentArrowCount);
@@ -67,7 +67,7 @@ public class AmmoManager {
 
         int totalArrows = 0;
 
-        // Check main inventory
+ 
         for (int i = 0; i < client.player.getInventory().size(); i++) {
             ItemStack stack = client.player.getInventory().getStack(i);
             if (stack.getItem() == Items.ARROW) {
@@ -85,12 +85,12 @@ public class AmmoManager {
     public static boolean hasInfiniteArrows() {
         if (client.player == null) return false;
 
-        // Check if player is in creative mode
+ 
         if (isInCreativeMode()) {
             return true;
         }
 
-        // Check if currently held bow has infinity enchantment
+ 
         ItemStack heldItem = client.player.getMainHandStack();
         if (heldItem.getItem() instanceof net.minecraft.item.BowItem) {
             return hasInfinityEnchantment(heldItem);
@@ -102,7 +102,7 @@ public class AmmoManager {
     public static boolean isInCreativeMode() {
         if (client.player == null) return false;
 
-        // Check player's creative mode abilities
+ 
         return client.player.getAbilities().creativeMode;
     }
 
@@ -110,14 +110,14 @@ public class AmmoManager {
         if (bowStack.isEmpty()) return false;
 
         try {
-            // Updated for 1.21 - Use the new enchantment API
+ 
             var enchantments = bowStack.getEnchantments();
             var registryManager = client.world.getRegistryManager();
             var enchantmentRegistry = registryManager.get(RegistryKeys.ENCHANTMENT);
             var infinityEntry = enchantmentRegistry.entryOf(Enchantments.INFINITY);
             return enchantments.getLevel(infinityEntry) > 0;
         } catch (Exception e) {
-            // Fallback for any API issues
+ 
             return false;
         }
     }

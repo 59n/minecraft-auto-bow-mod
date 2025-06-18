@@ -7,27 +7,27 @@ public class AdvancedRandomizer {
     private static long lastShotTime = 0;
     private static int consecutiveFastShots = 0;
     private static int consecutiveSlowShots = 0;
-    private static double currentBias = 0.5; // 0.0 = always min, 1.0 = always max
+    private static double currentBias = 0.5; 
 
-    // Gaussian distribution parameters
+ 
     private static final double GAUSSIAN_MEAN = 0.5;
     private static final double GAUSSIAN_STDDEV = 0.15;
 
     public static int getRandomizedDrawTime() {
         AutoBowConfig config = AutoBowConfig.getInstance();
 
-        // Use different randomization strategies based on configuration
+ 
         double normalizedValue = generateNormalizedValue();
 
-        // Apply micro-variations (±2 ticks)
+ 
         double microVariation = (random.nextGaussian() * 0.1) * 2;
         normalizedValue = Math.max(0.0, Math.min(1.0, normalizedValue + microVariation));
 
-        // Convert to actual tick range
+ 
         int range = config.maxDrawTime - config.minDrawTime;
         int drawTime = config.minDrawTime + (int)(normalizedValue * range);
 
-        // Apply pattern breaking logic
+ 
         drawTime = applyPatternBreaking(drawTime, config);
 
         if (config.enableDebugMode) {
@@ -41,13 +41,13 @@ public class AdvancedRandomizer {
     public static int getRandomizedCooldownTime() {
         AutoBowConfig config = AutoBowConfig.getInstance();
 
-        // Use complementary randomization for cooldown
+ 
         double normalizedValue = generateNormalizedValue();
 
-        // Inverse correlation with draw time for more natural feel
+ 
         normalizedValue = 1.0 - normalizedValue;
 
-        // Apply micro-variations
+ 
         double microVariation = (random.nextGaussian() * 0.08) * 2;
         normalizedValue = Math.max(0.0, Math.min(1.0, normalizedValue + microVariation));
 
@@ -58,31 +58,31 @@ public class AdvancedRandomizer {
     }
 
     private static double generateNormalizedValue() {
-        // Use Gaussian distribution for more natural randomness
+ 
         double gaussianValue;
         do {
             gaussianValue = random.nextGaussian() * GAUSSIAN_STDDEV + GAUSSIAN_MEAN;
         } while (gaussianValue < 0.0 || gaussianValue > 1.0);
 
-        // Apply bias drift for long-term pattern variation
+ 
         updateBias();
 
-        // Blend Gaussian with bias
-        double blendFactor = 0.7; // 70% Gaussian, 30% bias
+ 
+        double blendFactor = 0.7; 
         return (gaussianValue * blendFactor) + (currentBias * (1.0 - blendFactor));
     }
 
     private static void updateBias() {
-        // Slowly drift the bias to create long-term pattern changes
+ 
         double driftAmount = (random.nextGaussian() * 0.02);
         currentBias += driftAmount;
 
-        // Keep bias within reasonable bounds
+ 
         currentBias = Math.max(0.1, Math.min(0.9, currentBias));
 
-        // Occasionally reset bias for unpredictability
-        if (random.nextDouble() < 0.001) { // 0.1% chance per call
-            currentBias = 0.3 + (random.nextDouble() * 0.4); // Reset to 0.3-0.7 range
+ 
+        if (random.nextDouble() < 0.001) { 
+            currentBias = 0.3 + (random.nextDouble() * 0.4); 
         }
     }
 
@@ -90,7 +90,7 @@ public class AdvancedRandomizer {
         long currentTime = System.currentTimeMillis();
         long timeSinceLastShot = currentTime - lastShotTime;
 
-        // Track consecutive fast/slow shots
+ 
         if (baseTime <= (config.minDrawTime + config.maxDrawTime) / 2) {
             consecutiveFastShots++;
             consecutiveSlowShots = 0;
@@ -99,20 +99,20 @@ public class AdvancedRandomizer {
             consecutiveFastShots = 0;
         }
 
-        // Break patterns after too many consecutive similar timings
+ 
         if (consecutiveFastShots >= 3) {
-            baseTime = config.maxDrawTime - random.nextInt(5); // Force a slow shot
+            baseTime = config.maxDrawTime - random.nextInt(5); 
             consecutiveFastShots = 0;
         } else if (consecutiveSlowShots >= 3) {
-            baseTime = config.minDrawTime + random.nextInt(5); // Force a fast shot
+            baseTime = config.minDrawTime + random.nextInt(5); 
             consecutiveSlowShots = 0;
         }
 
-        // Occasional random spikes for unpredictability
-        if (random.nextDouble() < 0.05) { // 5% chance
+ 
+        if (random.nextDouble() < 0.05) { 
             int spike = random.nextBoolean() ?
-                    random.nextInt(8) - 4 : // Small spike ±4 ticks
-                    random.nextInt(16) - 8; // Large spike ±8 ticks
+                    random.nextInt(8) - 4 : 
+                    random.nextInt(16) - 8; 
             baseTime = Math.max(config.minDrawTime,
                     Math.min(config.maxDrawTime, baseTime + spike));
         }
@@ -128,7 +128,7 @@ public class AdvancedRandomizer {
         lastShotTime = 0;
     }
 
-    // Get human-readable randomization info for debugging
+ 
     public static String getRandomizationInfo() {
         return String.format("Bias: %.3f, Fast: %d, Slow: %d",
                 currentBias, consecutiveFastShots, consecutiveSlowShots);

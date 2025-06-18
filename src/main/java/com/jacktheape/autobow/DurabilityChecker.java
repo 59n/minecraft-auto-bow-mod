@@ -47,20 +47,20 @@ public class DurabilityChecker {
                 false
         );
 
-        // Log to console for debugging
+ 
         System.out.printf("[Auto Bow] Durability Check - %d/%d (%.1f%%)%n",
                 remainingDurability, maxDurability, durabilityPercentage);
     }
 
     private static String getDurabilityColorCode(double percentage) {
         if (percentage > 50) {
-            return "§a"; // Green - Good condition
+            return "§a"; 
         } else if (percentage > 25) {
-            return "§e"; // Yellow - Moderate condition
+            return "§e"; 
         } else if (percentage > 10) {
-            return "§6"; // Orange - Low condition
+            return "§6"; 
         } else {
-            return "§c"; // Red - Critical condition
+            return "§c"; 
         }
     }
 }

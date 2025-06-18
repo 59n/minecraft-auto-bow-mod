@@ -11,11 +11,25 @@ public class AutoBowClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         AutoBowKeybinds.registerKeybinds();
-        HudOverlay.register(); // Register the HUD overlay
+        HudOverlay.register();
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             AutoBowHandler.onClientTick(client);
+            SessionManager.onClientTick(client);
+            ServerProfileManager.onClientTick(client);
+            BossbarXpMonitor.onClientTick(client); 
             AutoBowKeybinds.handleKeyPress();
         });
+
+ 
+        AutoBowConfig config = AutoBowConfig.getInstance();
+        if (config.enableBossbarXpMonitoring) {
+            System.out.println("[Auto Bow Client] Auto-starting bossbar monitor");
+            BossbarXpMonitor.startMonitoring();
+        }
     }
+
+
+
+
 }

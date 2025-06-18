@@ -19,13 +19,22 @@ public class AutoBowHandler {
     private static boolean isDrawing = false;
     private static boolean usingOffhand = false;
     private static boolean packetSent = false;
+    private static boolean pausedForBreak = false;
 
     public static void onClientTick(MinecraftClient client) {
+ 
+        SessionManager.onClientTick(client);
+
+ 
+        if (pausedForBreak) {
+            return;
+        }
+
         if (!autoBowEnabled || client.player == null || client.world == null) {
             return;
         }
 
-        // Check both main hand and offhand for bows
+ 
         ItemStack mainHandItem = client.player.getMainHandStack();
         ItemStack offhandItem = client.player.getOffHandStack();
 
@@ -45,13 +54,13 @@ public class AutoBowHandler {
         if (bowStack != null && activeHand != null) {
             AutoBowConfig config = AutoBowConfig.getInstance();
 
-            // Check ammunition before proceeding
+ 
             AmmoManager.checkAmmunition();
             if (!AmmoManager.hasArrows()) {
                 return;
             }
 
-            // Check durability if protection is enabled
+ 
             if (config.enableDurabilityProtection && isDurabilityTooLow(bowStack)) {
                 disableModDueToDurability(client);
                 return;
@@ -66,7 +75,7 @@ public class AutoBowHandler {
     private static void handleAutoBowWithPackets(MinecraftClient client, Hand hand) {
         AutoBowConfig config = AutoBowConfig.getInstance();
 
-        // Handle cooldown period between shots
+ 
         if (cooldownTime > 0) {
             cooldownTime--;
             if (config.enableDebugMode) {
@@ -76,21 +85,31 @@ public class AutoBowHandler {
             return;
         }
 
-        // Start drawing if not already drawing
+ 
         if (!isDrawing) {
             startDrawingWithPackets(client, hand);
         }
 
-        // Continue drawing
+ 
         if (isDrawing) {
             drawTime++;
 
-            if (config.enableDebugMode) {
+ 
+            if (drawTime % 5 == 0) {
+                client.options.useKey.setPressed(true);
+
+ 
+                if (!client.player.isUsingItem()) {
+                    client.player.setCurrentHand(hand);
+                }
+            }
+
+            if (config.enableDebugMode && drawTime % 10 == 0) {
                 String handType = usingOffhand ? "offhand" : "main hand";
                 System.out.println("[Auto Bow Debug] Drawing with packets: " + drawTime + "/" + targetDrawTime + " (" + handType + ")");
             }
 
-            // Release when target draw time is reached
+ 
             if (drawTime >= targetDrawTime) {
                 releaseBowWithPackets(client, hand);
             }
@@ -107,13 +126,13 @@ public class AutoBowHandler {
 
         try {
             if (client.getNetworkHandler() != null) {
-                // Set the use key pressed BEFORE sending packet
+ 
                 client.options.useKey.setPressed(true);
 
-                // Small delay to ensure key state is registered
+ 
                 Thread.sleep(5);
 
-                // Get player's current rotation for the packet
+ 
                 float yaw = client.player.getYaw();
                 float pitch = client.player.getPitch();
                 int sequence = 0;
@@ -122,7 +141,7 @@ public class AutoBowHandler {
                 client.getNetworkHandler().sendPacket(startPacket);
                 packetSent = true;
 
-                // Ensure player starts using the item locally
+ 
                 if (!client.player.isUsingItem()) {
                     client.player.setCurrentHand(hand);
                 }
@@ -145,13 +164,13 @@ public class AutoBowHandler {
 
         try {
             if (client.getNetworkHandler() != null && packetSent) {
-                // Release the use key FIRST
+ 
                 client.options.useKey.setPressed(false);
 
-                // Small delay to ensure state change is processed
+ 
                 Thread.sleep(5);
 
-                // Send the release packet
+ 
                 PlayerActionC2SPacket releasePacket = new PlayerActionC2SPacket(
                         PlayerActionC2SPacket.Action.RELEASE_USE_ITEM,
                         client.player.getBlockPos(),
@@ -159,7 +178,7 @@ public class AutoBowHandler {
                 );
                 client.getNetworkHandler().sendPacket(releasePacket);
 
-                // Ensure player stops using item locally
+ 
                 if (client.player.isUsingItem()) {
                     client.player.stopUsingItem();
                 }
@@ -176,7 +195,7 @@ public class AutoBowHandler {
             }
         }
 
-        // Reset drawing state
+ 
         isDrawing = false;
         packetSent = false;
         drawTime = 0;
@@ -184,13 +203,9 @@ public class AutoBowHandler {
         cooldownTime = targetCooldownTime;
     }
 
-
-
-
-
     private static void resetBowState(MinecraftClient client) {
         if (isDrawing && packetSent) {
-            // Send release packet if we were in the middle of drawing
+ 
             try {
                 if (client.getNetworkHandler() != null) {
                     PlayerActionC2SPacket releasePacket = new PlayerActionC2SPacket(
@@ -201,7 +216,14 @@ public class AutoBowHandler {
                     client.getNetworkHandler().sendPacket(releasePacket);
                 }
             } catch (Exception e) {
-                // Ignore cleanup errors
+ 
+            }
+        }
+
+        if (isDrawing || packetSent) {
+            client.options.useKey.setPressed(false);
+            if (client.player != null && client.player.isUsingItem()) {
+                client.player.stopUsingItem();
             }
         }
 
@@ -253,6 +275,40 @@ public class AutoBowHandler {
         }
     }
 
+    public static void disableDueToSessionLimit() {
+        autoBowEnabled = false;
+        pausedForBreak = false;
+
+        MinecraftClient client = MinecraftClient.getInstance();
+        resetBowState(client);
+
+        AutoBowConfig config = AutoBowConfig.getInstance();
+        if (config.enableDebugMode) {
+            System.out.println("[Auto Bow Debug] Disabled due to daily session limit");
+        }
+    }
+
+    public static void pauseForBreak() {
+        pausedForBreak = true;
+
+        MinecraftClient client = MinecraftClient.getInstance();
+        resetBowState(client);
+
+        AutoBowConfig config = AutoBowConfig.getInstance();
+        if (config.enableDebugMode) {
+            System.out.println("[Auto Bow Debug] Paused for McMMO break period");
+        }
+    }
+
+    public static void resumeFromBreak() {
+        pausedForBreak = false;
+
+        AutoBowConfig config = AutoBowConfig.getInstance();
+        if (config.enableDebugMode) {
+            System.out.println("[Auto Bow Debug] Resumed from McMMO break period");
+        }
+    }
+
     public static void toggleAutoBow() {
         AutoBowConfig config = AutoBowConfig.getInstance();
         autoBowEnabled = !autoBowEnabled;
@@ -271,6 +327,9 @@ public class AutoBowHandler {
             String message = "§a[Auto Bow] " + status;
             if (autoBowEnabled) {
                 message += " | Network Packet Mode";
+                if (config.enableSessionManagement) {
+                    message += " | McMMO Sessions";
+                }
             }
             client.player.sendMessage(Text.literal(message), false);
         }
@@ -296,9 +355,14 @@ public class AutoBowHandler {
         return usingOffhand;
     }
 
+    public static boolean isPausedForBreak() {
+        return pausedForBreak;
+    }
+
     public static void forceEnable() {
         AutoBowConfig config = AutoBowConfig.getInstance();
         autoBowEnabled = true;
+        pausedForBreak = false;
         AmmoManager.resetWarnings();
         AdvancedRandomizer.resetPatternTracking();
 

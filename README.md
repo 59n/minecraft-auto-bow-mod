@@ -1,27 +1,46 @@
 # Auto Bow Mod for Minecraft 1.21 Fabric
 
-[![Build](https://github.com/59n/minecraft-auto-bow-mod/actions/workflows/build.yml/badge.svg)](https://github.com/59n/minecraft-auto-bow-mod/actions/workflows/build.yml)
+[![Build](https://github.com/59n/minecraft-auto-bow-mod/actions/workflows/github.com/59n/minecraft-auto-bow-mod/actions/workflows/builimg.shields.io/modrinth/dt/autobow?label=Modrinth%20Downloads&tps://img.shields.io/github/v/release/59n/minecraft-auto-bow-mod?label/59n/minecraft-auto-bow-mod/releases/d auto bow modification for Minecraft 1.21 that provides intelligent automated bow shooting with **real McMMO XP monitoring** and **efficiency-based session management**.
 
-An advanced auto bow modification for Minecraft 1.21 that provides intelligent automated bow shooting with sophisticated anti-detection features.
+## 🎯 Key Features
 
-## Features
+### Three Smart Operating Modes
+- **🕒 Simple Mode**: Pure timed cycles (shoot X minutes, break Y minutes) - no interruptions, no daily limits
+- **📊 Efficiency Mode**: Automatic breaks when XP rates drop below your threshold (default: 60%)
+- **🧠 Learning Mode**: Server-adaptive optimization with pattern learning and automatic timing adjustments
 
-### Core Functionality
-- **Automatic Bow Shooting**: Detects bows in main hand or offhand and automatically shoots at randomized intervals
-- **Advanced Randomization**: Gaussian distribution timing patterns with bias drift to avoid detection
-- **AFK-Safe Operation**: Continues working when chat is open or when alt-tabbing
+### Real McMMO Integration
+- **Detects bossbar progress format**: `[current / total xp]` - works with all McMMO configurations
+- **Real-time XP rate monitoring** with 100k XP/min baseline (GOOD performance)
+- **Automatic efficiency tracking** and diminishing returns detection
+- **Performance ratings**: EXCELLENT (150k+), GOOD (100k+), FAIR (80k+), BELOW AVERAGE, POOR
 
-### User Interface
-- **Real-time HUD Overlay**: Professional status display showing timing, durability, and ammunition
-- **Settings GUI**: Complete configuration interface accessible via hotkey
-- **Customizable Keybinds**: All controls remappable through Minecraft's controls menu
+### Professional GUI & HUD
+- **Tabbed settings interface** with 6 organized sections (Timing, Movement, Simple Mode, Efficiency, Learning, HUD)
+- **Customizable HUD** with 4 corner positioning options and scaling (50%-150%)
+- **Mode-aware display** showing relevant information per operating mode
+- **Real-time efficiency monitoring** with visual progress bars
 
-### Smart Protection
-- **Durability Protection**: Automatically stops when bow durability gets too low
-- **Ammunition Management**: Intelligent arrow tracking with creative mode and infinity support
-- **Multi-hand Support**: Works with bows in either main hand or offhand
+### Advanced Automation Features
+- **Network packet-based bow automation** for Minecraft 1.21 Fabric
+- **Advanced randomization** with pattern detection avoidance
+- **Movement variation control** (completely optional - OFF stays OFF)
+- **Durability protection** with configurable thresholds
+- **Multi-hand bow support** (main hand and offhand detection)
 
-## Installation
+### Server Adaptation
+- **Learns optimal timing patterns** for each server automatically
+- **Adapts to server response patterns** and anti-cheat systems
+- **Comprehensive session statistics** and daily tracking
+- **Daily session limits** with smart reset functionality
+
+## 📈 Efficiency-Based Session Management
+
+Unlike simple timer-based mods, Auto Bow monitors your actual McMMO XP rates and automatically takes breaks when efficiency drops below your configured threshold. This ensures optimal XP farming while respecting server diminishing returns mechanics.
+
+**Example**: If your XP rate drops from 120k/min to 60k/min (below 60% threshold), the mod automatically pauses for a configurable break period to restore full XP rates.
+
+## 🛠 Installation
 
 ### Prerequisites
 - Minecraft 1.21
@@ -29,13 +48,17 @@ An advanced auto bow modification for Minecraft 1.21 that provides intelligent a
 - Fabric API 0.102.0+1.21 or higher
 - Java 21
 
+### Download Options
+- **[Modrinth](https://modrinth.com/mod/auto-bow-efficiency-based-mcmmo-farming)** (Recommended)
+- **[GitHub Releases](https://github.com/59n/minecraft-auto-bow-mod/releases)**
+
 ### Steps
-1. Download the latest release from the [releases](https://github.com/59n/minecraft-auto-bow-mod/releases) page
+1. Download the latest release from your preferred platform
 2. Place the `.jar` file in your `mods` folder
 3. Ensure Fabric API is also installed
 4. Launch Minecraft with the Fabric profile
 
-## Usage
+## 🎮 Usage
 
 ### Default Controls
 - **B Key**: Toggle auto bow on/off
@@ -44,46 +67,102 @@ An advanced auto bow modification for Minecraft 1.21 that provides intelligent a
 - **O Key**: Open settings GUI
 
 ### Configuration
-Access the settings GUI (default: O key) to customize:
-- Draw time range (1-2 seconds default)
+Access the tabbed settings GUI (default: O key) to customize:
+
+#### Timing Tab
+- Draw time range (customizable timing)
 - Cooldown between shots
 - Durability protection threshold
-- Visual feedback options
 
-## Technical Details
+#### Movement Tab
+- Movement variation control (OFF/Low/Medium/High)
+- Advanced randomization options
+- Complete user control (OFF stays OFF)
+
+#### Simple Mode Tab
+- Timed shooting/breaking cycles
+- No XP monitoring or daily limits
+- Pure automation without interruptions
+
+#### Efficiency Tab
+- Real McMMO XP monitoring
+- Efficiency thresholds and session limits
+- Performance baseline configuration
+
+#### Learning Tab
+- Server adaptation settings
+- Pattern learning controls
+- Automatic optimization features
+
+#### HUD Tab
+- Display position and scaling
+- Element visibility toggles
+- Performance indicator settings
+
+## 📊 Perfect Performance Baseline
+
+Based on extensive testing, the mod uses **100k XP/min as the "GOOD" baseline** for McMMO archery farming, with clear performance indicators to help you optimize your farming efficiency.
+
+## 🔒 Safety Features
+
+- **Durability protection** prevents bow breaking
+- **Daily session limits** prevent excessive use (configurable)
+- **Movement variation** is completely optional (many users prefer OFF)
+- **Server adaptation warnings** prevent unwanted setting changes
+- **Comprehensive logging** for troubleshooting
+
+## 🛠 Technical Details
 
 ### Compatibility
-- **Client-side only**: Works on most multiplayer servers
+- **Client-side only**: Works on most multiplayer servers where automation is permitted
 - **Cross-platform**: Windows, macOS, and Linux support
 - **Performance optimized**: Minimal impact on game performance
+- **Mod Menu integration**: Config button opens settings GUI
 
 ### Anti-Detection Features
 - Gaussian distribution timing patterns
 - Pattern breaking algorithms
 - Bias drift for long-term variation
 - Micro-randomization for authenticity
+- Optional movement variation
 
-## Development
+## 🚀 Development
 
 ### Building from Source
+```bash
 git clone https://github.com/59n/minecraft-auto-bow-mod.git
 cd minecraft-auto-bow-mod
 ./gradlew build
-
+```
 
 ### Development Environment
 - Java 21
 - IntelliJ IDEA (recommended)
 - Fabric development environment
+- Fabric API for testing
 
-## License
+### Latest Changes (v1.2.1)
+- Fixed infinite level-up detection loop causing log spam
+- Resolved unrealistic 300k+ XP/min readings - now shows accurate ~100k rates
+- Enhanced movement settings persistence - OFF stays OFF permanently
+- Improved rate validation with realistic 200k XP/min cap
+- Added 100k XP/min baseline system with performance ratings
+
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Disclaimer
+## ⚠️ Disclaimer
 
-This mod is for educational and personal use. Always check server rules before using automation mods in multiplayer environments.
+This mod is designed for servers where automation is permitted. Always check your server's rules before use. The mod includes comprehensive session management to promote responsible usage.
 
-## Contributing
+## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions are welcome! Please feel free to submit a Pull Request or open an issue on GitHub.
+
+## 🔗 Links
+
+- **[Modrinth Page](h[ttps://modrinth.com/mod/autobow](https://modrinth.com/mod/auto-bow-efficiency-based-mcmmo-farming))**
+- **[GitHub Repository](https://github.com/59n/minecraft-auto-bow-mod)**
+- **[Issues & Bug Reports](https://github.com/59n/minecraft-auto-bow-mod/issues)**
+- **[Latest Release](https://github.com/59n/minecraft-auto-bow-mod/releases/latest)**
